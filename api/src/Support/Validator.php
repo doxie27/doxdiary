@@ -86,6 +86,74 @@ final class Validator
         return (float) $value;
     }
 
+    /** Ganzzahl oder null (z. B. optionale Wiederholungen). */
+    public function nullableInt(string $key, int $min, int $max): ?int
+    {
+        $value = $this->input[$key] ?? null;
+        if ($value === null) {
+            return null;
+        }
+        if (!is_int($value) || $value < $min || $value > $max) {
+            $this->fail($key, "Bitte eine ganze Zahl zwischen {$min} und {$max} angeben.");
+            return null;
+        }
+        return $value;
+    }
+
+    /** ISO-8601-Zeitpunkt (z. B. 2026-10-18T07:30:00.000Z) → UTC-DATETIME. */
+    public function datetime(string $key): string
+    {
+        $value = $this->input[$key] ?? '';
+        try {
+            $d = is_string($value) && $value !== '' ? new \DateTimeImmutable($value) : null;
+        } catch (\Exception) {
+            $d = null;
+        }
+        if ($d === null || $d->getTimestamp() > time() + 600 || $d->getTimestamp() < time() - 3 * 365 * 86400) {
+            $this->fail($key, 'Ungültiger Zeitpunkt.');
+            return gmdate('Y-m-d H:i:s');
+        }
+        return $d->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Liste von Strings (z. B. Hilfsmittel), bereinigt und dedupliziert.
+     * @return list<string>
+     */
+    public function stringList(string $key, int $maxItems, int $maxLen): array
+    {
+        $value = $this->input[$key] ?? [];
+        if (!is_array($value) || count($value) > $maxItems) {
+            $this->fail($key, "Höchstens {$maxItems} Einträge.");
+            return [];
+        }
+        $out = [];
+        foreach ($value as $v) {
+            $v = is_string($v) ? trim((string) preg_replace('/\p{C}/u', '', $v)) : '';
+            if ($v !== '' && mb_strlen($v) <= $maxLen && !in_array($v, $out, true)) {
+                $out[] = $v;
+            }
+        }
+        return $out;
+    }
+
+    /** @return list<mixed> Rohliste (Einträge werden einzeln validiert) */
+    public function list(string $key, int $maxItems): array
+    {
+        $value = $this->input[$key] ?? [];
+        if (!is_array($value) || !array_is_list($value) || count($value) > $maxItems) {
+            $this->fail($key, "Höchstens {$maxItems} Einträge.");
+            return [];
+        }
+        return $value;
+    }
+
+    /** @return array<string, string> */
+    public function errors(): array
+    {
+        return $this->errors;
+    }
+
     /**
      * @template T of string
      * @param list<T> $allowed

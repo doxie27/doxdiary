@@ -9,7 +9,11 @@ use Doxie\Auth\Passwords;
 use Doxie\Http\HttpException;
 use Doxie\Http\Request;
 use Doxie\Http\Response;
+use Doxie\Repositories\DiaryRepository;
 use Doxie\Repositories\DogRepository;
+use Doxie\Repositories\ExerciseRepository;
+use Doxie\Repositories\PlanRepository;
+use Doxie\Repositories\SessionRepository;
 use Doxie\Repositories\UserRepository;
 use Doxie\Services\AccountDeleter;
 use Doxie\Support\Validator;
@@ -66,11 +70,25 @@ final class MeController
     public function export(Request $r): Response
     {
         $id = $this->app->userId();
+        $db = $this->app->db();
+        $dogs = $this->app->dogs()->listForUser($id);
+        $perDog = [];
+        foreach ($dogs as $dog) {
+            $dogId = (int) $dog['id'];
+            $perDog[] = [
+                'dog' => DogRepository::present($dog),
+                'plans' => array_map(PlanRepository::present(...), (new PlanRepository($db))->listForDog($dogId)),
+                'sessions' => array_map(SessionRepository::present(...), (new SessionRepository($db))->listForDog($dogId, '1970-01-01 00:00:00')),
+                'diary' => array_map(DiaryRepository::present(...), (new DiaryRepository($db))->listForDog($dogId)),
+            ];
+        }
         $data = [
-            'format' => 'doxie-diary/v1',
+            'format' => 'doxie-diary/v2',
             'exportedAt' => gmdate('c'),
             'user' => UserRepository::present($this->app->users()->find($id)),
-            'dogs' => array_map(DogRepository::present(...), $this->app->dogs()->listForUser($id)),
+            'exercises' => array_map(ExerciseRepository::present(...), (new ExerciseRepository($db))->listForOwner($id)),
+            'dogs' => $perDog,
+            'note' => 'Fotos sind nicht enthalten. Sie lassen sich in der App einzeln speichern.',
         ];
         $res = Response::json($data);
         return new Response(200, $res->body, $res->headers + [

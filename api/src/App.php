@@ -10,7 +10,10 @@ use Doxie\Auth\Session;
 use Doxie\Controllers\AuthController;
 use Doxie\Controllers\DogController;
 use Doxie\Controllers\MeController;
+use Doxie\Controllers\DiaryController;
+use Doxie\Controllers\ImportController;
 use Doxie\Controllers\MediaController;
+use Doxie\Controllers\TrainingController;
 use Doxie\Http\HttpException;
 use Doxie\Http\Request;
 use Doxie\Http\Response;
@@ -133,6 +136,30 @@ final class App
         $r->add('DELETE', '/dogs/{id}/photo', $dogs->deletePhoto(...));
 
         $r->add('GET', '/media/{id}', $media->show(...));
+
+        $t = new TrainingController($this);
+        $r->add('GET', '/exercises', $t->listExercises(...));
+        $r->add('POST', '/exercises', $t->createExercise(...));
+        $r->add('PATCH', '/exercises/{id}', $t->updateExercise(...));
+        $r->add('DELETE', '/exercises/{id}', $t->deleteExercise(...));
+        $r->add('POST', '/exercises/{id}/photo', $t->uploadExercisePhoto(...));
+        $r->add('DELETE', '/exercises/{id}/photo', $t->deleteExercisePhoto(...));
+        $r->add('GET', '/dogs/{id}/plans', $t->listPlans(...));
+        $r->add('POST', '/dogs/{id}/plans', $t->createPlan(...));
+        $r->add('PATCH', '/plans/{id}', $t->updatePlan(...));
+        $r->add('DELETE', '/plans/{id}', $t->deletePlan(...));
+        $r->add('GET', '/dogs/{id}/sessions', $t->listSessions(...));
+        $r->add('POST', '/dogs/{id}/sessions', $t->createSession(...));
+
+        $d = new DiaryController($this);
+        $r->add('GET', '/dogs/{id}/diary', $d->index(...));
+        $r->add('POST', '/dogs/{id}/diary', $d->store(...));
+        $r->add('PATCH', '/diary/{id}', $d->update(...));
+        $r->add('DELETE', '/diary/{id}', $d->destroy(...));
+        $r->add('POST', '/diary/{id}/photos', $d->addPhoto(...));
+        $r->add('DELETE', '/diary/{id}/photos/{mediaId}', $d->removePhoto(...));
+
+        $r->add('POST', '/me/import', (new ImportController($this))->import(...));
         return $r;
     }
 

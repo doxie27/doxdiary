@@ -33,8 +33,8 @@ final class MediaRepository
     }
 
     /**
-     * Darf der Benutzer diese Datei sehen? Eigene Uploads oder Fotos von
-     * Hunden mit Profil-Freigabe. Weitere Verknüpfungen folgen in Phase 3/4.
+     * Darf der Benutzer diese Datei sehen? Eigene Uploads, Hundefotos mit
+     * Profil-Freigabe oder Tagebuchfotos mit Tagebuch-Freigabe.
      */
     public function canView(int $mediaId, int $userId): bool
     {
@@ -46,8 +46,14 @@ final class MediaRepository
                     WHERE d.photo_media_id = md.id AND m.user_id = ? AND m.revoked_at IS NULL
                       AND (m.role = 'owner' OR FIND_IN_SET('profile', m.scopes))
                 )
+                OR EXISTS (
+                    SELECT 1 FROM diary_photos p JOIN diary_entries e ON e.id = p.entry_id
+                    JOIN dog_members m ON m.dog_id = e.dog_id
+                    WHERE p.media_id = md.id AND m.user_id = ? AND m.revoked_at IS NULL
+                      AND (m.role = 'owner' OR FIND_IN_SET('diary', m.scopes))
+                )
             )",
-            [$mediaId, $userId, $userId],
+            [$mediaId, $userId, $userId, $userId],
         );
         return $row !== null;
     }

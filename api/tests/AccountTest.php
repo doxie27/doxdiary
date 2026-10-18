@@ -44,7 +44,8 @@ final class AccountTest extends TestCase
         $res = $c->get('/me/export');
         self::assertSame(200, $res->status);
         self::assertStringContainsString('attachment', (string) $res->header('Content-Disposition'));
-        self::assertSame(['Bruno'], array_column($res->json['dogs'], 'name'));
+        self::assertSame(['Bruno'], array_map(static fn ($d) => $d['dog']['name'], $res->json['dogs']));
+        self::assertArrayHasKey('exercises', $res->json);
     }
 
     public function testDeleteAccountRemovesEverything(): void

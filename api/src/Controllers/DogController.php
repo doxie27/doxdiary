@@ -8,6 +8,7 @@ use Doxie\App;
 use Doxie\Http\HttpException;
 use Doxie\Http\Request;
 use Doxie\Http\Response;
+use Doxie\Repositories\DiaryRepository;
 use Doxie\Repositories\DogRepository;
 use Doxie\Support\Validator;
 
@@ -55,9 +56,13 @@ final class DogController
         $userId = $this->app->userId();
         $dog = $this->load($r);
         $this->app->access()->requireOwner($userId, (int) $dog['id']);
-        $this->app->dogs()->delete((int) $dog['id']);
+        $mediaIds = (new DiaryRepository($this->app->db()))->mediaIdsForDog((int) $dog['id']);
         if ($dog['photo_media_id'] !== null) {
-            $this->removeMedia((int) $dog['photo_media_id']);
+            $mediaIds[] = (int) $dog['photo_media_id'];
+        }
+        $this->app->dogs()->delete((int) $dog['id']);
+        foreach ($mediaIds as $mediaId) {
+            $this->removeMedia($mediaId);
         }
         return Response::noContent();
     }

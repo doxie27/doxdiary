@@ -74,6 +74,10 @@ final class Db
      */
     public function transaction(callable $fn): mixed
     {
+        // Verschachtelt: innerer Aufruf läuft in der äußeren Transaktion mit
+        if ($this->pdo->inTransaction()) {
+            return $fn();
+        }
         $this->pdo->beginTransaction();
         try {
             $result = $fn();
