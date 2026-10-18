@@ -18,7 +18,7 @@ Willkommen & Auth-Oberflächen (ohne echte Anmeldung) · Dashboard · Hund wechs
 
 ## Phase 2 – Technische Basis (nach Freigabe)
 
-1. P1 STRATO-Voraussetzungen prüfen (Checkliste in `03-architektur.md`), PHP-Version festlegen
+1. ✅ STRATO-Voraussetzungen geprüft (PHP 8.4, Argon2id, GD/Imagick, Verzeichnis außerhalb des Webroots). Offen: mod_rewrite, DB-Version, Cron, SSH
 2. P1 Ordnerstruktur `api/`, Config außerhalb Webroot, `.htaccess`-Vorlagen
 3. P1 Migrationen + Schema `0001_init.sql`, Migrationsrunner
 4. P1 Router, JSON-Responses, Fehlerbehandlung, Validierung, Policy-Schicht
@@ -57,3 +57,4 @@ Familienkonten · Therapeut:innen-Accounts & Praxen · Planzuweisung · Freigabe
 | Datum | Schritt |
 |---|---|
 | 2026-10-18 | Phase 1 abgeschlossen: Konzept, Designsystem, Architektur, Prototyp; 7 Unit-Tests für den Trainingsablauf grün; visuelle Prüfung mobil (390 px) und Desktop (1360 px) |
+| 2026-10-18 | STRATO-Hosting geprüft und Ergebnisse in `03-architektur.md` dokumentiert |

@@ -22,24 +22,52 @@
 
 Kein dauerhaft laufender Node-Prozess: Node wird nur lokal für Entwicklung und Build verwendet.
 
-## STRATO – Voraussetzungen prüfen ⚠️
+## STRATO – geprüfte Voraussetzungen
 
-Ich habe keinen Zugriff auf deinen STRATO-Account. Öffentliche Quellen sind für das Paket „Basic“ widersprüchlich (u. a. Berichte über PHP 8.0 als Standard bei manchen Tarifen). **Bevor wir in Phase 2 hosting-spezifisch werden, bitte im STRATO-Kundenlogin prüfen:**
+Ermittelt am 2026-10-18 mit `deploy/strato-check.php`. Das Skript wurde danach wieder gelöscht.
 
-| Punkt | Wo prüfen | Benötigt / Alternative |
+| Punkt | Ergebnis | Konsequenz |
 |---|---|---|
-| PHP-Version wählbar ≥ 8.1 (ideal 8.2/8.3) | Hosting → Einstellungen → PHP-Version | Pflicht (Enums, readonly, `never`) – sonst Code auf 8.0 halten |
-| Anzahl MySQL-Datenbanken & Version (MySQL 8 / MariaDB 10.x) | Datenbanken verwalten | 1 DB genügt |
-| `.htaccess` + `mod_rewrite` | Standard bei STRATO, kurz testen | SPA-Fallback & API-Routing |
-| SSH/SFTP-Zugang | Zugänge / SFTP | Deployment per SFTP oder `rsync` |
-| Verzeichnis **oberhalb** des Webroots oder Domain auf Unterordner zeigbar | Domainverwaltung → Ziel | Für `config.php` und Uploads außerhalb des öffentlichen Bereichs |
-| Cronjobs | Hosting → Cronjobs | Für Backups / Aufräumen (sonst manuell) |
-| SSL-Zertifikat für die Domain | Domains → SSL | Pflicht (Secure-Cookies, PWA) |
-| E-Mail-Versand aus PHP (`mail()` oder SMTP-Postfach) | E-Mail / Postfächer | Passwort-Reset; bevorzugt SMTP über ein STRATO-Postfach |
-| Upload-Limits (`upload_max_filesize`, `post_max_size`) | `phpinfo()` | Fotos ≤ 8 MB, Videos ggf. begrenzen |
-| Speicherplatz | Paketübersicht | Fotos/Videos |
+| PHP | **8.4.25**, FastCGI, Apache | Code-Ziel **PHP ≥ 8.2**. Wir nutzen keine 8.4-only-Features, damit eine Rückstufung durch STRATO nichts bricht. Lokal wird mit 8.3 getestet. |
+| HTTPS | aktiv | Cookies mit `Secure`, HSTS möglich |
+| Erweiterungen | pdo_mysql, mbstring, fileinfo, gd (inkl. WebP), imagick, openssl, sodium, intl, curl, zip | Alles für Auth, Uploads und Bildverarbeitung ist vorhanden. Bilder werden mit GD neu kodiert, Imagick dient als Option. |
+| Passwort-Hashing | Argon2id verfügbar | `PASSWORD_ARGON2ID` als Standard |
+| `display_errors` | aus | Gut. Zusätzlich setzt die App es selbst. |
+| `session.cookie_secure` | 0 | Die App setzt Cookie-Parameter selbst (`Secure`, `HttpOnly`, `SameSite=Lax`) und einen eigenen `session.save_path` außerhalb des Webroots. |
+| Upload-Limits | 128 MB pro Datei, POST bis 1024 MB, 20 Dateien | Die App setzt strengere eigene Limits: Bilder ≤ 10 MB, Videos später ≤ 100 MB. |
+| Speicher / Laufzeit | 512 MB, 360 s | Ausreichend für Bildverarbeitung und Export |
+| Verzeichnis über dem Webroot | lesbar **und** beschreibbar, kein `open_basedir` | `config.php`, `storage/` (Uploads, Sessions, Backups) liegen **außerhalb** des öffentlichen Bereichs. |
+| Freier Speicher | Anzeige = gemeinsamer Speicher, nicht das Paketkontingent | Das Kontingent laut Paketübersicht ist maßgeblich. |
+| `mail()` | vorhanden | Bevorzugt wird trotzdem SMTP über ein STRATO-Postfach (bessere Zustellbarkeit, SPF/DKIM). |
+| `exec` | möglich | `mysqldump` für Backups per PHP oder Cron |
+| Zeitzone | Europe/Berlin | Datenbank speichert UTC. Die Anzeige erfolgt im Frontend lokal. |
 
-Ein `api/public/info-check.php` (wird in Phase 2 mitgeliefert und nach Prüfung gelöscht) gibt die relevanten Werte gesammelt aus.
+**Noch offen** (nur im Kundenlogin sichtbar oder per Test zu prüfen):
+
+| Punkt | Wo prüfen |
+|---|---|
+| `mod_rewrite` / `.htaccess` | Test-`.htaccess` in Phase 2 |
+| Anzahl & Version der Datenbanken (MySQL 8 / MariaDB) | Datenbanken verwalten |
+| SSH/SFTP | Zugänge |
+| Cronjobs | Hosting → Cronjobs (sonst Backup manuell oder per geschütztem Aufruf) |
+| Domain auf Unterordner zeigbar | Domainverwaltung |
+| SMTP-Postfach für Systemmails | E-Mail |
+
+### Geplantes Verzeichnislayout auf STRATO
+
+```
+<home>/
+├── doxie-private/          ← nicht öffentlich
+│   ├── config.php          Zugangsdaten (nie im Repo)
+│   ├── storage/uploads/    Fotos/Videos
+│   ├── storage/sessions/   PHP-Sessions
+│   ├── storage/backups/    DB-Dumps (Rotation)
+│   └── app/                PHP-Quellcode (src/, vendor/, migrations/)
+└── <webroot>/              ← Domain zeigt hierher
+    ├── index.html, assets/ Vite-Build
+    ├── .htaccess           SPA-Fallback, Sicherheitsheader
+    └── api/index.php       Einziger PHP-Einstieg, lädt ../doxie-private/app
+```
 
 ## Repository-Struktur (Ziel ab Phase 2)
 
