@@ -1,4 +1,6 @@
-import { ChevronRight, Download, LogOut, Moon, RotateCcw, Shield, Stethoscope, Trash, Users } from 'lucide-react'
+import { ChevronRight, Download, KeyRound, LogOut, Moon, RotateCcw, Shield, Stethoscope, Trash, Users } from 'lucide-react'
+import { ApiError } from '../../api/client'
+import { authApi, meApi } from '../../api/endpoints'
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/layout/PageHeader'
@@ -12,19 +14,55 @@ export function AccountPage() {
   const toast = useToast()
   const [editName, setEditName] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [changePw, setChangePw] = useState(false)
   const [name, setName] = useState(state.user.firstName)
+  const [lastName, setLastName] = useState(state.user.lastName)
+  const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
   const u = state.user
+  const live = state.mode === 'live'
 
-  // Datenexport (DSGVO Art. 20) – im Prototyp als JSON direkt im Browser erzeugt
-  const exportData = () => {
-    const { authed: _a, selectedDogId: _s, ...data } = state
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), format: 'doxie-diary/v1', ...data }, null, 2)], { type: 'application/json' })
+  const attempt = async (fn: () => Promise<void>) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await fn()
+    } catch (e) {
+      setError(e instanceof ApiError ? (Object.values(e.fields)[0] ?? e.message) : 'Etwas ist schiefgelaufen.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const closeSheets = () => {
+    setEditName(false)
+    setChangePw(false)
+    setConfirmDelete(false)
+    setPassword('')
+    setNewPassword('')
+    setError(null)
+  }
+
+  // Datenexport (DSGVO Art. 20): Server-Daten + bis Phase 3/4 noch lokal gespeicherte Bereiche
+  const exportData = () => attempt(async () => {
+    const { exercises, plans, sessions, diary } = state
+    const server = live ? await meApi.export() : { format: 'doxie-diary/v1', exportedAt: new Date().toISOString(), user: state.user, dogs: state.dogs }
+    const local = { exercises, plans, sessions, diary }
+    const blob = new Blob([JSON.stringify({ ...(server as object), local }, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `doxie-diary-export-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(a.href)
     toast('Export erstellt')
+  })
+
+  const logout = async () => {
+    if (live) await authApi.logout().catch(() => null)
+    dispatch({ type: 'logout' })
+    navigate('/welcome')
   }
 
   return (
@@ -68,6 +106,7 @@ export function AccountPage() {
         <section>
           <SectionHeader title="Datenschutz" />
           <Card className="divide-y divide-line">
+            {live && <Row icon={<IconTile><KeyRound className="size-4" /></IconTile>} label="Passwort ändern" sub="Andere Geräte werden abgemeldet" onClick={() => setChangePw(true)} />}
             <Row icon={<IconTile><Download className="size-4" /></IconTile>} label="Meine Daten exportieren" sub="Alle Daten als JSON-Datei" onClick={exportData} />
             <Row icon={<IconTile><Shield className="size-4" /></IconTile>} label="Kein Tracking, keine Werbung" sub="Keine externen Analysedienste" />
             <Row icon={<IconTile tone="bg-clay-100 text-alert"><Trash className="size-4" /></IconTile>} label="Konto löschen" sub="Entfernt alle Daten unwiderruflich" onClick={() => setConfirmDelete(true)} danger />
@@ -75,26 +114,61 @@ export function AccountPage() {
         </section>
 
         <div className="grid grid-cols-1 gap-2.5">
-          <Button variant="secondary" icon={RotateCcw} block onClick={() => { dispatch({ type: 'reset' }); toast('Beispieldaten wiederhergestellt') }}>Beispieldaten zurücksetzen</Button>
-          <Button variant="ghost" icon={LogOut} block onClick={() => { dispatch({ type: 'logout' }); navigate('/welcome') }}>Abmelden</Button>
+          {!live && <Button variant="secondary" icon={RotateCcw} block onClick={() => { dispatch({ type: 'reset' }); toast('Beispieldaten wiederhergestellt') }}>Beispieldaten zurücksetzen</Button>}
+          <Button variant="ghost" icon={LogOut} block onClick={logout}>Abmelden</Button>
         </div>
-        <p className="text-center text-xs text-ink-3">Doxie Diary · Prototyp 0.1</p>
+        {live && <p className="text-center text-xs text-ink-3">Hinweis: Training und Tagebuch werden derzeit noch nur auf diesem Gerät gespeichert. Die Synchronisierung folgt mit dem nächsten Update.</p>}
+        <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.2' : 'Demo mit Beispieldaten'}</p>
       </div>
 
-      <Sheet open={editName} onClose={() => setEditName(false)} title="Profil bearbeiten">
+      <Sheet open={editName} onClose={closeSheets} title="Profil bearbeiten">
         <div className="space-y-4">
-          <TextField label="Vorname" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-          <TextField label="E-Mail" value={u.email} disabled hint="Änderung mit Bestätigungs-Mail (Phase 2)" />
-          <Button block onClick={() => { if (name.trim()) { dispatch({ type: 'updateUser', user: { ...u, firstName: name.trim() } }); setEditName(false); toast('Gespeichert') } }}>Speichern</Button>
+          <TextField label="Vorname" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
+          <TextField label="Nachname" hint="optional" value={lastName} onChange={(e) => setLastName(e.target.value)} maxLength={60} />
+          <TextField label="E-Mail" value={u.email} disabled hint="Änderung folgt später" />
+          {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
+          <Button block disabled={busy || !name.trim()} onClick={() => attempt(async () => {
+            const user = live ? await meApi.update(name.trim(), lastName.trim()) : { ...u, firstName: name.trim(), lastName: lastName.trim() }
+            dispatch({ type: 'updateUser', user })
+            closeSheets()
+            toast('Gespeichert')
+          })}>Speichern</Button>
         </div>
       </Sheet>
 
-      <Sheet open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Konto löschen?">
+      <Sheet open={changePw} onClose={closeSheets} title="Passwort ändern">
+        <div className="space-y-4">
+          <TextField label="Aktuelles Passwort" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <TextField label="Neues Passwort" hint="mind. 10 Zeichen" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+          {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
+          <Button block disabled={busy || !password || newPassword.length < 10} onClick={() => attempt(async () => {
+            await meApi.changePassword(password, newPassword)
+            closeSheets()
+            toast('Passwort geändert')
+          })}>Passwort ändern</Button>
+        </div>
+      </Sheet>
+
+      <Sheet open={confirmDelete} onClose={closeSheets} title="Konto löschen?">
         <p className="text-ink-2">Alle Hundeprofile, Trainingspläne, Einheiten, Tagebucheinträge und Fotos werden dauerhaft gelöscht. Tipp: Exportiere deine Daten vorher.</p>
-        <p className="mt-3 rounded-2xl bg-sunken px-4 py-3 text-sm text-ink-3">Im Prototyp werden dabei nur die Beispieldaten zurückgesetzt.</p>
+        {live ? (
+          <TextField className="mt-5" label="Zur Bestätigung dein Passwort" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        ) : (
+          <p className="mt-3 rounded-2xl bg-sunken px-4 py-3 text-sm text-ink-3">Im Demo-Modus werden dabei nur die Beispieldaten zurückgesetzt.</p>
+        )}
+        {error && <p role="alert" className="mt-4 rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
         <div className="mt-6 grid grid-cols-1 gap-2.5">
-          <Button variant="danger" block onClick={() => { dispatch({ type: 'reset' }); dispatch({ type: 'logout' }); navigate('/welcome') }}>Endgültig löschen</Button>
-          <Button variant="ghost" block onClick={() => setConfirmDelete(false)}>Abbrechen</Button>
+          <Button variant="danger" block disabled={busy || (live && !password)} onClick={() => attempt(async () => {
+            if (live) {
+              await meApi.delete(password)
+              try { localStorage.removeItem(`doxie-diary.local.${u.id}`) } catch { /* ignorieren */ }
+            } else {
+              dispatch({ type: 'reset' })
+            }
+            dispatch({ type: 'logout' })
+            navigate('/welcome')
+          })}>Endgültig löschen</Button>
+          <Button variant="ghost" block onClick={closeSheets}>Abbrechen</Button>
         </div>
       </Sheet>
     </div>

@@ -1,5 +1,5 @@
 import { BookHeart, Dumbbell, House, NotebookPen, Plus, Play, UserRound, Dog as DogIcon, Settings } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../lib/cn'
 import { useStore } from '../../store/AppStore'
@@ -21,6 +21,9 @@ export function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const next = todaysPlans(state, dog.id).find((t) => !t.done)
+
+  // Neue Seite beginnt oben – wie in nativen Apps
+  useEffect(() => window.scrollTo(0, 0), [location.pathname])
 
   const go = (to: string) => {
     setQuick(false)

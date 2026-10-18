@@ -46,7 +46,7 @@ Ermittelt am 2026-10-18 mit `deploy/strato-check.php`. Das Skript wurde danach w
 
 | Punkt | Ergebnis | Konsequenz |
 |---|---|---|
-| Datenbanken | bis zu 25, MySQL 8 oder MariaDB wählbar | **MySQL 8.0**. Das Schema bleibt MariaDB-kompatibel: kein MySQL-spezifisches JSON-SQL, nur Standard-Typen. Eine Datenbank für Produktion, eine zweite für Staging bzw. Restore-Tests. |
+| Datenbanken | bis zu 25, MySQL 8 oder MariaDB wählbar; angelegt: **MariaDB 11.8** | Schema und Abfragen nutzen nur Standard-SQL und laufen auf MariaDB und MySQL 8. Lokal wird gegen MariaDB getestet. Eine Datenbank für Produktion, eine zweite später für Restore-Tests. Host/Benutzer stehen nur in `config.php` auf dem Server. |
 | SSH & SFTP | verfügbar | Deployment per `rsync`/SFTP, Migrationen per CLI (`php bin/migrate.php`), Backups per `mysqldump` |
 | Domain → Unterordner | möglich | Die Domain zeigt auf `<home>/doxie-public/`, der private Ordner liegt daneben. |
 
@@ -111,7 +111,9 @@ doxie-diary/
 
 ## Backend-Entwurf (Phase 2)
 
-Bewusst **ohne großes Framework** (STRATO-Shared-Hosting, kein Composer-Zwang): schlanker eigener Router, PDO, klare Schichten. Composer wird lokal genutzt (z. B. für PHPUnit, PHPMailer) und `vendor/` mit deployt.
+Bewusst **ohne Framework und ohne Laufzeit-Abhängigkeiten**: eigener Router, PDO, klare Schichten, eigener schlanker SMTP-Client. Composer dient nur lokal für PHPUnit; auf den Server kommt kein `vendor/`.
+
+**Umgesetzt in Phase 2** (`api/`): `src/Http` (Request, Response, Router), `src/Auth` (Session, Passwörter, Rate-Limiter, DogAccess-Policy), `src/Repositories`, `src/Controllers`, `src/Media/ImageStore`, `src/Mail` (SMTP/Log/mail()), `bin/migrate.php`, `bin/backup.php`, `tests/` (PHPUnit-Integrationstests gegen echten Server und Test-DB).
 
 ### API (REST, JSON, Präfix `/api/v1`)
 
@@ -120,7 +122,7 @@ Bewusst **ohne großes Framework** (STRATO-Shared-Hosting, kein Composer-Zwang):
 | `GET /auth/csrf` | CSRF-Token für die Session |
 | `POST /auth/register`, `/auth/login`, `/auth/logout` | Konto |
 | `POST /auth/password/forgot`, `/auth/password/reset` | Reset mit Einmal-Token |
-| `GET/PATCH /me`, `DELETE /me`, `GET /me/export` | Profil, Löschung, Datenexport |
+| `GET/PATCH /me`, `POST /me/password`, `GET /me/export`, `POST /me/delete` | Profil, Passwort ändern, Datenexport, Löschung (mit Passwortbestätigung) |
 | `GET/POST /dogs`, `GET/PATCH/DELETE /dogs/{id}`, `POST /dogs/{id}/photo` | Hunde |
 | `GET/POST /exercises`, `GET/PATCH/DELETE /exercises/{id}`, `POST /exercises/{id}/media` | Übungen |
 | `GET/POST /dogs/{id}/plans`, `GET/PATCH/DELETE /plans/{id}` | Trainingspläne (Items als Teil des Plans, Reihenfolge = Array-Index) |
@@ -197,13 +199,15 @@ Pläne, Einheiten, Tagebuch und Medien werden immer über ihren Hund (bzw. Besit
 | Uploads | MIME per `finfo` prüfen (JPEG/PNG/WebP; Video MP4 später), Größenlimit, Bilder per GD neu kodieren (entfernt EXIF/GPS), zufälliger Dateiname, Speicherung **außerhalb des Webroots**, Auslieferung über `/api/media/{id}` mit Berechtigungsprüfung |
 | Header | `.htaccess`: HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP (`default-src 'self'`) |
 | Fehler | `display_errors=Off`; Logs ohne personenbezogene Inhalte (nur IDs, Fehlercodes) |
-| Geheimnisse | `config.php` außerhalb des Webroots bzw. `.env` nicht im Repo; `.env.example` dokumentiert Schlüssel |
+| Geheimnisse | `config.php` außerhalb des Webroots, nie im Repo; `api/config.example.php` dokumentiert alle Schlüssel |
 
 ### Migrationen
 
 Nummerierte SQL-Dateien in `api/migrations/`. `bin/migrate.php` (lokal per CLI oder einmalig geschützt per Browser, falls kein SSH) wendet fehlende Versionen in Transaktionen an und protokolliert sie in `schema_migrations`.
 
 ### Backup & Wiederherstellung
+
+> Umsetzung ohne Cronjobs: siehe `docs/05-deployment.md` (`bin/backup.php`, angestoßen per SSH über die Windows-Aufgabenplanung).
 
 1. **Datenbank:** täglicher Dump per STRATO-Cronjob (`mysqldump --single-transaction`), komprimiert, außerhalb des Webroots, 14 Tage Rotation; zusätzlich STRATO-eigene Datensicherung.
 2. **Uploads:** wöchentliches Archiv des `storage/`-Ordners.

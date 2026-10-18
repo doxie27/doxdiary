@@ -1,16 +1,22 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
-import { createDemoState } from '../data/mock'
+import { createDemoState, demoExercises } from '../data/mock'
 import type { DiaryEntry, Dog, DogMembership, Exercise, ID, TrainingPlan, TrainingSession, User } from '../data/types'
 
 /**
- * Prototyp-Store: hält alle Daten im Speicher und spiegelt sie in localStorage.
- * In Phase 2 werden die Aktionen durch Aufrufe der PHP-REST-API ersetzt
- * (src/api/*). Die Komponenten greifen nur über diesen Hook zu und bleiben
- * dadurch unverändert.
+ * Zentraler App-Zustand mit zwei Modi:
+ * - demo: Prototyp mit Beispieldaten, alles nur im Browser (localStorage)
+ * - live: Konto und Hundeprofile kommen von der PHP-API. Training und Tagebuch
+ *   liegen bis Phase 3/4 noch lokal auf dem Gerät (pro Konto getrennt).
+ * Server-Daten (Profil, Gesundheitshinweise) werden bewusst NICHT im
+ * localStorage abgelegt.
  */
 
+export type Mode = 'demo' | 'live'
+
 export interface AppState {
+  mode: Mode
   authed: boolean
+  booting: boolean
   selectedDogId: ID
   user: User
   dogs: Dog[]
@@ -22,12 +28,15 @@ export interface AppState {
 }
 
 type Action =
-  | { type: 'login' }
+  | { type: 'demoLogin' }
+  | { type: 'liveSession'; user: User; dogs: Dog[] }
+  | { type: 'bootDone' }
   | { type: 'logout' }
   | { type: 'reset' }
   | { type: 'selectDog'; id: ID }
   | { type: 'updateUser'; user: User }
   | { type: 'upsertDog'; dog: Dog }
+  | { type: 'removeDog'; id: ID }
   | { type: 'upsertExercise'; exercise: Exercise }
   | { type: 'deleteExercise'; id: ID }
   | { type: 'upsertPlan'; plan: TrainingPlan }
@@ -36,26 +45,55 @@ type Action =
   | { type: 'upsertDiary'; entry: DiaryEntry }
   | { type: 'deleteDiary'; id: ID }
 
-const STORAGE_KEY = 'doxie-diary.prototype.v1'
+const DEMO_KEY = 'doxie-diary.prototype.v1'
+const MODE_KEY = 'doxie-diary.mode'
+const localKey = (userId: ID) => `doxie-diary.local.${userId}`
 
-function initial(): AppState {
-  const demo = createDemoState()
-  return { authed: false, selectedDogId: demo.dogs[0].id, ...demo }
+type LocalData = Pick<AppState, 'exercises' | 'plans' | 'sessions' | 'diary' | 'selectedDogId'>
+
+function read<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    return null
+  }
 }
 
-function load(): AppState {
+function write(key: string, value: unknown) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as AppState
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value))
   } catch {
-    /* Speicher nicht verfügbar (privater Modus) – mit Demo-Daten starten */
+    /* Speicher voll oder blockiert – App läuft ohne Persistenz weiter */
   }
-  return initial()
+}
+
+function demoState(): AppState {
+  const demo = createDemoState()
+  return { mode: 'demo', authed: false, booting: false, selectedDogId: demo.dogs[0].id, ...demo }
+}
+
+const emptyUser: User = { id: '', firstName: '', lastName: '', email: '', role: 'owner', createdAt: '' }
+
+function load(): AppState {
+  const mode = read<string>(MODE_KEY)
+  const savedDemo = read<AppState>(DEMO_KEY)
+  // Demo-Modus (auch für Prototyp-Stände ohne gespeicherten Modus)
+  if (mode === 'demo' || (mode === null && savedDemo?.authed)) {
+    return savedDemo ? { ...demoState(), ...savedDemo, mode: 'demo', booting: false } : demoState()
+  }
+  // Live: Sitzung beim Server prüfen, bis dahin Ladebildschirm
+  return { ...demoState(), mode: 'live', authed: false, booting: true, user: emptyUser, dogs: [], memberships: [] }
+}
+
+/** Startdaten für ein echtes Konto: Übungsvorlagen, sonst leer. */
+function liveLocal(userId: ID): LocalData {
+  return read<LocalData>(localKey(userId)) ?? { exercises: demoExercises, plans: [], sessions: [], diary: [], selectedDogId: '' }
 }
 
 function upsert<T extends { id: ID }>(list: T[], item: T): T[] {
   const i = list.findIndex((x) => x.id === item.id)
-  if (i === -1) return [item, ...list]
+  if (i === -1) return [...list, item]
   const copy = list.slice()
   copy[i] = item
   return copy
@@ -63,12 +101,31 @@ function upsert<T extends { id: ID }>(list: T[], item: T): T[] {
 
 function reducer(state: AppState, a: Action): AppState {
   switch (a.type) {
-    case 'login':
-      return { ...state, authed: true }
+    case 'demoLogin':
+      return { ...demoState(), ...(read<AppState>(DEMO_KEY) ?? {}), mode: 'demo', authed: true, booting: false }
+    case 'liveSession': {
+      const local = liveLocal(a.user.id)
+      const selected = a.dogs.some((d) => d.id === local.selectedDogId) ? local.selectedDogId : (a.dogs[0]?.id ?? '')
+      return {
+        ...state,
+        ...local,
+        mode: 'live',
+        authed: true,
+        booting: false,
+        user: a.user,
+        dogs: a.dogs,
+        memberships: a.dogs.map((d) => ({ userId: a.user.id, dogId: d.id, role: 'owner', scopes: ['profile', 'training', 'diary'] })),
+        selectedDogId: selected,
+      }
+    }
+    case 'bootDone':
+      return { ...state, booting: false }
     case 'logout':
-      return { ...state, authed: false }
+      return state.mode === 'live' ? { ...state, authed: false, user: emptyUser, dogs: [], memberships: [] } : { ...state, authed: false }
     case 'reset':
-      return { ...initial(), authed: true }
+      return state.mode === 'live'
+        ? { ...state, exercises: demoExercises, plans: [], sessions: [], diary: [] }
+        : { ...demoState(), authed: true }
     case 'selectDog':
       return { ...state, selectedDogId: a.id }
     case 'updateUser':
@@ -77,11 +134,21 @@ function reducer(state: AppState, a: Action): AppState {
       const isNew = !state.dogs.some((d) => d.id === a.dog.id)
       return {
         ...state,
-        dogs: isNew ? [...state.dogs, a.dog] : upsert(state.dogs, a.dog),
-        memberships: isNew
-          ? [...state.memberships, { userId: state.user.id, dogId: a.dog.id, role: 'owner', scopes: ['profile', 'training', 'diary'] }]
-          : state.memberships,
+        dogs: upsert(state.dogs, a.dog),
+        memberships: isNew ? [...state.memberships, { userId: state.user.id, dogId: a.dog.id, role: 'owner', scopes: ['profile', 'training', 'diary'] }] : state.memberships,
         selectedDogId: isNew ? a.dog.id : state.selectedDogId,
+      }
+    }
+    case 'removeDog': {
+      const dogs = state.dogs.filter((d) => d.id !== a.id)
+      return {
+        ...state,
+        dogs,
+        memberships: state.memberships.filter((m) => m.dogId !== a.id),
+        plans: state.plans.filter((p) => p.dogId !== a.id),
+        sessions: state.sessions.filter((s) => s.dogId !== a.id),
+        diary: state.diary.filter((e) => e.dogId !== a.id),
+        selectedDogId: state.selectedDogId === a.id ? (dogs[0]?.id ?? '') : state.selectedDogId,
       }
     }
     case 'upsertExercise':
@@ -108,6 +175,7 @@ function reducer(state: AppState, a: Action): AppState {
 interface Store {
   state: AppState
   dispatch: (a: Action) => void
+  /** Ausgewählter Hund. Innerhalb der App-Shell immer vorhanden (siehe RequireDog). */
   dog: Dog
 }
 
@@ -118,10 +186,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const dispatch = useCallback((a: Action) => rawDispatch(a), [])
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch {
-      /* Quota überschritten oder blockiert – Prototyp läuft ohne Persistenz weiter */
+    if (state.booting) return
+    if (state.mode === 'demo') {
+      write(MODE_KEY, 'demo')
+      write(DEMO_KEY, state)
+    } else if (state.authed) {
+      write(MODE_KEY, 'live')
+      const local: LocalData = { exercises: state.exercises, plans: state.plans, sessions: state.sessions, diary: state.diary, selectedDogId: state.selectedDogId }
+      write(localKey(state.user.id), local)
     }
   }, [state])
 

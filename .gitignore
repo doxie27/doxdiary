@@ -28,6 +28,11 @@ dist-ssr
 .env.*
 !.env.example
 api/config.php
+api/storage/
+api/vendor/
+.phpunit.cache
 storage/
 !.env.showcase
 dist-showcase
+release/
+release/

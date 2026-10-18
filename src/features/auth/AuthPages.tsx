@@ -1,13 +1,15 @@
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CircleCheck, Eye, EyeOff, Lock, Mail, Sparkles } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ApiError } from '../../api/client'
+import { authApi } from '../../api/endpoints'
 import { Brand } from '../../components/layout/AppShell'
 import { Button, TextField } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
 /**
- * Anmelde-Oberflächen als Prototyp: Formulare validieren clientseitig,
- * führen aber keine echte Anmeldung durch (Phase 2: PHP-Session + CSRF).
+ * Anmelde-Oberflächen. Clientseitige Prüfungen sind nur Komfort –
+ * maßgeblich ist die Validierung der PHP-API (Session + CSRF).
  */
 
 export function WelcomePage() {
@@ -33,7 +35,7 @@ export function WelcomePage() {
         <div className="grid grid-cols-1 gap-2.5">
           <Button size="lg" block iconRight={ArrowRight} onClick={() => navigate('/register')}>Kostenlos starten</Button>
           <Button size="lg" variant="secondary" block onClick={() => navigate('/login')}>Ich habe schon ein Konto</Button>
-          <button onClick={() => { dispatch({ type: 'login' }); navigate('/') }} className="mt-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-sage-600">
+          <button onClick={() => { dispatch({ type: 'demoLogin' }); navigate('/') }} className="mt-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-sage-600">
             <Sparkles className="size-4" /> Prototyp mit Beispieldaten ansehen
           </button>
         </div>
@@ -81,8 +83,33 @@ function PasswordField({ value, onChange, label = 'Passwort', autoComplete }: { 
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
-function ProtoNote() {
-  return <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-3"><ShieldCheck className="size-3.5" /> Prototyp – es werden keine Daten übertragen.</p>
+function ErrorBox({ error }: { error: string | null }) {
+  if (!error) return null
+  return <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>
+}
+
+/** Fehlermeldung aus der API – bei Feldfehlern die erste konkrete Meldung. */
+function message(e: unknown): string {
+  if (e instanceof ApiError) return Object.values(e.fields)[0] ?? e.message
+  return 'Etwas ist schiefgelaufen. Bitte versuche es erneut.'
+}
+
+/** Kleiner Helfer für Formulare mit Ladezustand und Fehlermeldung. */
+function useSubmit() {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await fn()
+    } catch (e) {
+      setError(message(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return { busy, error, setError, run }
 }
 
 export function LoginPage() {
@@ -90,12 +117,15 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const { busy, error, setError, run } = useSubmit()
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!emailOk(email) || !pw) return setError('Bitte E-Mail-Adresse und Passwort eingeben.')
-    dispatch({ type: 'login' })
-    navigate('/')
+    run(async () => {
+      const session = await authApi.login(email.trim(), pw)
+      dispatch({ type: 'liveSession', ...session })
+      navigate('/', { replace: true })
+    })
   }
   return (
     <AuthLayout title="Willkommen zurück" text="Schön, dass ihr wieder da seid." footer={<>Noch kein Konto? <Link to="/register" className="font-semibold text-sage-600">Registrieren</Link></>}>
@@ -103,9 +133,8 @@ export function LoginPage() {
         <TextField label="E-Mail" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <PasswordField value={pw} onChange={setPw} autoComplete="current-password" />
         <div className="text-right"><Link to="/reset" className="text-sm font-semibold text-sage-600">Passwort vergessen?</Link></div>
-        {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
-        <Button type="submit" size="lg" block>Anmelden</Button>
-        <ProtoNote />
+        <ErrorBox error={error} />
+        <Button type="submit" size="lg" block disabled={busy}>{busy ? 'Anmelden …' : 'Anmelden'}</Button>
       </form>
     </AuthLayout>
   )
@@ -118,7 +147,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [consent, setConsent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { busy, error, setError, run } = useSubmit()
   const strength = [pw.length >= 10, /[A-Z]/.test(pw) && /[a-z]/.test(pw), /\d|[^A-Za-z]/.test(pw)].filter(Boolean).length
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -126,13 +155,16 @@ export function RegisterPage() {
     if (!emailOk(email)) return setError('Bitte eine gültige E-Mail-Adresse eingeben.')
     if (pw.length < 10) return setError('Das Passwort braucht mindestens 10 Zeichen.')
     if (!consent) return setError('Bitte bestätige die Datenschutzhinweise.')
-    dispatch({ type: 'login' })
-    navigate('/')
+    run(async () => {
+      const session = await authApi.register(name.trim(), email.trim(), pw, consent)
+      dispatch({ type: 'liveSession', ...session })
+      navigate('/', { replace: true })
+    })
   }
   return (
     <AuthLayout title="Konto erstellen" text="In einer Minute startklar – danach legst du das Profil deines Hundes an." footer={<>Schon registriert? <Link to="/login" className="font-semibold text-sage-600">Anmelden</Link></>}>
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <TextField label="Vorname" autoComplete="given-name" value={name} onChange={(e) => setName(e.target.value)} />
+        <TextField label="Vorname" autoComplete="given-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
         <TextField label="E-Mail" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <div>
           <PasswordField value={pw} onChange={setPw} autoComplete="new-password" />
@@ -145,9 +177,8 @@ export function RegisterPage() {
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 accent-[var(--color-sage-600)]" />
           <span>Ich habe die Datenschutzhinweise gelesen. Meine Daten werden nur zur Bereitstellung der App verwendet – ohne Tracking oder Werbung.</span>
         </label>
-        {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
-        <Button type="submit" size="lg" block>Konto erstellen</Button>
-        <ProtoNote />
+        <ErrorBox error={error} />
+        <Button type="submit" size="lg" block disabled={busy}>{busy ? 'Konto wird erstellt …' : 'Konto erstellen'}</Button>
       </form>
     </AuthLayout>
   )
@@ -156,6 +187,7 @@ export function RegisterPage() {
 export function ResetPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const { busy, error, run } = useSubmit()
   return (
     <AuthLayout title="Passwort zurücksetzen" text="Wir schicken dir einen Link, mit dem du ein neues Passwort festlegen kannst." footer={<Link to="/login" className="font-semibold text-sage-600">Zurück zur Anmeldung</Link>}>
       {sent ? (
@@ -166,10 +198,47 @@ export function ResetPage() {
           <p className="mt-2 text-sm text-ink-2">Falls ein Konto zu <span className="font-semibold">{email}</span> existiert, erhältst du in Kürze eine E-Mail. Der Link ist 60 Minuten gültig.</p>
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); if (emailOk(email)) setSent(true) }} className="space-y-4" noValidate>
+        <form onSubmit={(e) => { e.preventDefault(); if (emailOk(email)) run(async () => { await authApi.forgot(email.trim()); setSent(true) }) }} className="space-y-4" noValidate>
           <TextField label="E-Mail" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Button type="submit" size="lg" block icon={Lock} disabled={!emailOk(email)}>Link anfordern</Button>
-          <ProtoNote />
+          <ErrorBox error={error} />
+          <Button type="submit" size="lg" block icon={Lock} disabled={!emailOk(email) || busy}>Link anfordern</Button>
+        </form>
+      )}
+    </AuthLayout>
+  )
+}
+
+/** Ziel des Links aus der Reset-Mail: /reset/confirm?token=… */
+export function ResetConfirmPage() {
+  const [params] = useSearchParams()
+  const token = params.get('token') ?? ''
+  const [pw, setPw] = useState('')
+  const [done, setDone] = useState(false)
+  const { busy, error, setError, run } = useSubmit()
+  return (
+    <AuthLayout title="Neues Passwort" text="Wähle ein neues Passwort für dein Konto. Danach wirst du auf allen Geräten abgemeldet." footer={<Link to="/login" className="font-semibold text-sage-600">Zur Anmeldung</Link>}>
+      {done ? (
+        <div className="animate-rise rounded-3xl bg-sage-50 p-6 text-center">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sage-100 text-sage-700"><CircleCheck className="size-6" /></span>
+          <h2 className="font-display mt-4 text-2xl">Passwort geändert</h2>
+          <p className="mt-2 text-sm text-ink-2">Du kannst dich jetzt mit deinem neuen Passwort anmelden.</p>
+          <Link to="/login" className="mt-5 inline-flex h-12 items-center rounded-2xl bg-sage-600 px-5 font-semibold text-white">Anmelden</Link>
+        </div>
+      ) : !token ? (
+        <ErrorBox error="Dieser Link ist unvollständig. Bitte öffne den Link aus der E-Mail erneut oder fordere einen neuen an." />
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (pw.length < 10) return setError('Das Passwort braucht mindestens 10 Zeichen.')
+            run(async () => { await authApi.reset(token, pw); setDone(true) })
+          }}
+          className="space-y-4"
+          noValidate
+        >
+          <PasswordField label="Neues Passwort" value={pw} onChange={setPw} autoComplete="new-password" />
+          <ErrorBox error={error} />
+          <Button type="submit" size="lg" block disabled={busy}>Passwort speichern</Button>
         </form>
       )}
     </AuthLayout>

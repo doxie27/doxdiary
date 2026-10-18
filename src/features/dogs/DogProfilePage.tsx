@@ -1,19 +1,24 @@
-import { Cake, ChevronLeft, Dumbbell, Lock, Mars, NotebookPen, Pencil, Scale, ShieldCheck, Sparkles, Venus } from 'lucide-react'
+import { Cake, ChevronLeft, Dumbbell, Lock, Mars, NotebookPen, Pencil, Scale, ShieldCheck, Sparkles, Trash, Venus } from 'lucide-react'
+import { ApiError } from '../../api/client'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useShell } from '../../components/layout/useShell'
-import { Card, DogBackdrop, DogPortrait, IconButton, SectionHeader, Sheet, useToast } from '../../components/ui'
+import { Button, Card, DogBackdrop, DogPortrait, IconButton, SectionHeader, Sheet, useToast } from '../../components/ui'
 import { ageFrom } from '../../lib/date'
 import { cn } from '../../lib/cn'
 import { fmt } from '../../lib/format'
 import { useStore } from '../../store/AppStore'
 import { activePlans, dogSessions, estimateMinutes } from '../../store/selectors'
+import { useDogActions } from '../../store/useDogActions'
 import { DogForm } from './DogForm'
 
 export function DogProfilePage() {
-  const { state, dispatch, dog } = useStore()
+  const { state, dog } = useStore()
   const { openSwitcher } = useShell()
+  const { save, remove } = useDogActions()
   const [edit, setEdit] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const toast = useToast()
   const navigate = useNavigate()
   const age = ageFrom(dog.birthDate)
@@ -118,12 +123,39 @@ export function DogProfilePage() {
         <DogForm
           initial={dog}
           submitLabel="Änderungen speichern"
-          onSubmit={(d) => {
-            dispatch({ type: 'upsertDog', dog: d })
+          onSubmit={async (d, photo) => {
+            await save(d, photo)
             setEdit(false)
             toast('Profil gespeichert')
           }}
         />
+        <button onClick={() => { setEdit(false); setConfirmDelete(true) }} className="mx-auto mt-4 flex items-center gap-2 py-2 text-sm font-semibold text-alert">
+          <Trash className="size-4" /> Hundeprofil löschen
+        </button>
+      </Sheet>
+
+      <Sheet open={confirmDelete} onClose={() => setConfirmDelete(false)} title={`${dog.name} löschen?`}>
+        <p className="text-ink-2">Das Profil wird mit Foto, Trainingsplänen, Verlauf und Tagebucheinträgen dauerhaft gelöscht.</p>
+        {deleteError && <p role="alert" className="mt-4 rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{deleteError}</p>}
+        <div className="mt-6 grid grid-cols-1 gap-2.5">
+          <Button
+            variant="danger"
+            block
+            onClick={async () => {
+              try {
+                await remove(dog.id)
+                setConfirmDelete(false)
+                toast('Profil gelöscht')
+                navigate('/', { replace: true })
+              } catch (e) {
+                setDeleteError(e instanceof ApiError ? e.message : 'Löschen fehlgeschlagen.')
+              }
+            }}
+          >
+            Endgültig löschen
+          </Button>
+          <Button variant="ghost" block onClick={() => setConfirmDelete(false)}>Abbrechen</Button>
+        </div>
       </Sheet>
     </div>
   )

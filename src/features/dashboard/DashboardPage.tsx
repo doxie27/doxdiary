@@ -118,6 +118,13 @@ export function DashboardPage() {
       <section>
         <SectionHeader title="Zuletzt" action="Tagebuch" to="/diary" />
         <div className="grid grid-cols-1 gap-3">
+          {!sessions[0] && diary.length === 0 && (
+            <Card className="p-5 text-sm text-ink-3 shadow-none">
+              Hier erscheinen eure letzten Trainingseinheiten und Tagebucheinträge. Leg los mit einem{' '}
+              <Link to="/training/plans/new" className="font-semibold text-sage-600">Trainingsplan</Link> oder einem{' '}
+              <Link to="/diary?new=1" className="font-semibold text-sage-600">ersten Eintrag</Link>.
+            </Card>
+          )}
           {sessions[0] && (
             <Link to="/training/history" className="block">
               <Card className="flex items-center gap-4 p-4 transition hover:border-line-strong">

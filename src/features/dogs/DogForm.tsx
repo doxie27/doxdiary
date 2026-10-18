@@ -1,10 +1,12 @@
 import { Camera, Mars, Venus } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { ApiError } from '../../api/client'
 import { Button, ChoiceGroup, DogPortrait, Select, TextArea, TextField } from '../../components/ui'
 import { dogAccents } from '../../data/meta'
 import type { Dog, DogAccent } from '../../data/types'
 import { cn } from '../../lib/cn'
-import { fileToDataUrl } from '../../lib/image'
+import { dataUrlToBlob, fileToDataUrl } from '../../lib/image'
+import type { PhotoChange } from '../../store/useDogActions'
 
 export function emptyDog(id: string): Dog {
   return { id, name: '', breed: '', sex: 'female', birthDate: '', weightKg: 0, neutered: null, healthNotes: '', bio: '', photoUrl: null, accent: 'sage' }
@@ -13,24 +15,34 @@ export function emptyDog(id: string): Dog {
 interface Props {
   initial: Dog
   submitLabel: string
-  onSubmit: (dog: Dog) => void
+  onSubmit: (dog: Dog, photo: PhotoChange) => Promise<unknown> | void
 }
 
 /** Formular für Anlegen und Bearbeiten – Validierung erfolgt später zusätzlich serverseitig. */
 export function DogForm({ initial, submitLabel, onSubmit }: Props) {
   const [d, setD] = useState<Dog>(initial)
   const [error, setError] = useState<string | null>(null)
+  const [photo, setPhoto] = useState<PhotoChange>(null)
+  const [busy, setBusy] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const set = <K extends keyof Dog>(k: K, v: Dog[K]) => setD((x) => ({ ...x, [k]: v }))
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!d.name.trim()) return setError('Wie heißt dein Hund?')
     if (!d.birthDate) return setError('Bitte ein Geburtsdatum angeben – ein ungefähres reicht.')
     if (d.birthDate > new Date().toISOString().slice(0, 10)) return setError('Das Geburtsdatum liegt in der Zukunft.')
     if (!(d.weightKg > 0 && d.weightKg < 120)) return setError('Bitte ein Gewicht zwischen 0 und 120 kg angeben.')
     setError(null)
-    onSubmit({ ...d, name: d.name.trim(), breed: d.breed.trim() })
+    setBusy(true)
+    try {
+      await onSubmit({ ...d, name: d.name.trim(), breed: d.breed.trim() }, photo)
+    } catch (err) {
+      // Serverseitige Validierung hat das letzte Wort
+      setError(err instanceof ApiError ? (Object.values(err.fields)[0] ?? err.message) : 'Speichern fehlgeschlagen.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -51,7 +63,10 @@ export function DogForm({ initial, submitLabel, onSubmit }: Props) {
             const f = e.target.files?.[0]
             if (!f) return
             try {
-              set('photoUrl', await fileToDataUrl(f))
+              // Verkleinert hochladen spart mobiles Datenvolumen; der Server kodiert erneut
+              const url = await fileToDataUrl(f, 1600)
+              set('photoUrl', url)
+              setPhoto({ file: await dataUrlToBlob(url) })
             } catch (err) {
               setError((err as Error).message)
             }
@@ -73,7 +88,7 @@ export function DogForm({ initial, submitLabel, onSubmit }: Props) {
             ))}
           </div>
           {d.photoUrl && (
-            <button type="button" onClick={() => set('photoUrl', null)} className="mt-2 text-xs font-semibold text-ink-3 underline">
+            <button type="button" onClick={() => { set('photoUrl', null); setPhoto('remove') }} className="mt-2 text-xs font-semibold text-ink-3 underline">
               Foto entfernen
             </button>
           )}
@@ -104,8 +119,8 @@ export function DogForm({ initial, submitLabel, onSubmit }: Props) {
       <TextArea label="Gesundheitliche Hinweise" hint="nur für dich" value={d.healthNotes} onChange={(e) => set('healthNotes', e.target.value)} placeholder="z. B. Diagnosen, Unverträglichkeiten, Besonderheiten" maxLength={1000} />
 
       {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
-      <Button type="submit" size="lg" block>
-        {submitLabel}
+      <Button type="submit" size="lg" block disabled={busy}>
+        {busy ? 'Wird gespeichert …' : submitLabel}
       </Button>
     </form>
   )

@@ -1,7 +1,7 @@
 {
   "name": "doxie-diary",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,11 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "build:preview": "tsc -b && vite build --mode showcase --outDir dist-showcase"
+    "build:preview": "tsc -b && vite build --mode showcase --outDir dist-showcase",
+    "api": "php -S 127.0.0.1:8080 -t api/public api/public/index.php",
+    "api:migrate": "php api/bin/migrate.php",
+    "api:test": "cd api && php vendor/bin/phpunit",
+    "release": "node scripts/build-release.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

@@ -23,3 +23,13 @@ export async function fileToDataUrl(file: File, maxSize = 720): Promise<string> 
     URL.revokeObjectURL(url)
   }
 }
+
+/** Ohne fetch(), damit die Content-Security-Policy kein data: für connect-src braucht. */
+export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+  const [head, b64] = dataUrl.split(',', 2)
+  const mime = /data:([^;]+)/.exec(head)?.[1] ?? 'application/octet-stream'
+  const bin = atob(b64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}

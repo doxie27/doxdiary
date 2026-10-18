@@ -1,0 +1,13 @@
+# Alle API-Anfragen an den Front-Controller leiten
+Options -Indexes -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L,QSA]
+
+# Keine anderen PHP-Dateien oder versteckten Dateien ausliefern
+<FilesMatch "^(?!index\.php$).*\.php$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

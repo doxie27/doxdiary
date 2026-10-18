@@ -1,9 +1,11 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
+import { authApi } from './api/endpoints'
+import { Brand } from './components/layout/AppShell'
 import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
 import { ToastProvider } from './components/ui'
 import { AccountPage } from './features/account/AccountPage'
-import { LoginPage, RegisterPage, ResetPage, WelcomePage } from './features/auth/AuthPages'
+import { LoginPage, RegisterPage, ResetConfirmPage, ResetPage, WelcomePage } from './features/auth/AuthPages'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { DiaryPage } from './features/diary/DiaryPage'
 import { DogProfilePage } from './features/dogs/DogProfilePage'
@@ -22,13 +24,42 @@ import { AppStoreProvider, useStore } from './store/AppStore'
 // (STRATO: .htaccess-Fallback auf index.html, siehe docs/03-architektur.md).
 const Router = import.meta.env.VITE_ROUTER === 'hash' ? HashRouter : BrowserRouter
 
+/** Prüft beim Start, ob noch eine gültige Server-Sitzung besteht. */
+function SessionBoot() {
+  const { state, dispatch } = useStore()
+  useEffect(() => {
+    if (!state.booting) return
+    authApi
+      .me()
+      .then((session) => dispatch({ type: 'liveSession', ...session }))
+      .catch(() => dispatch({ type: 'bootDone' }))
+  }, [state.booting, dispatch])
+  return null
+}
+
+function Splash() {
+  return (
+    <div className="flex min-h-dvh animate-fade items-center justify-center" aria-busy="true" aria-label="Wird geladen">
+      <Brand />
+    </div>
+  )
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
   const { state } = useStore()
+  if (state.booting) return <Splash />
   return state.authed ? children : <Navigate to="/welcome" replace />
+}
+
+/** Ohne Hundeprofil geht es direkt ins Onboarding. */
+function RequireDog({ children }: { children: ReactNode }) {
+  const { state } = useStore()
+  return state.dogs.length > 0 ? children : <NewDogPage onboarding />
 }
 
 function PublicOnly({ children }: { children: ReactNode }) {
   const { state } = useStore()
+  if (state.booting) return <Splash />
   return state.authed ? <Navigate to="/" replace /> : children
 }
 
@@ -37,15 +68,17 @@ export default function App() {
     <AppStoreProvider>
       <ToastProvider>
         <Router basename={import.meta.env.VITE_ROUTER === 'hash' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
+          <SessionBoot />
           <Routes>
             <Route path="/welcome" element={<PublicOnly><WelcomePage /></PublicOnly>} />
             <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
             <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
             <Route path="/reset" element={<PublicOnly><ResetPage /></PublicOnly>} />
+            <Route path="/reset/confirm" element={<ResetConfirmPage />} />
 
-            <Route path="/training/session/:planId" element={<RequireAuth><SessionPage /></RequireAuth>} />
+            <Route path="/training/session/:planId" element={<RequireAuth><RequireDog><SessionPage /></RequireDog></RequireAuth>} />
 
-            <Route element={<RequireAuth><AppShell /></RequireAuth>}>
+            <Route element={<RequireAuth><RequireDog><AppShell /></RequireDog></RequireAuth>}>
               <Route index element={<DashboardPage />} />
               <Route path="training" element={<PlansPage />} />
               <Route path="training/plans/new" element={<PlanEditorPage />} />

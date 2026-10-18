@@ -16,17 +16,26 @@ Willkommen & Auth-Oberflächen (ohne echte Anmeldung) · Dashboard · Hund wechs
 
 **Bewusst noch nicht:** echte Registrierung/Login, Server, E-Mail, Videos, Offline-Service-Worker, Dark Mode, Teilen.
 
-## Phase 2 – Technische Basis (nach Freigabe)
+## Phase 2 – Technische Basis ✅ (zur Prüfung)
 
-1. ✅ STRATO-Voraussetzungen geprüft (PHP 8.4, Argon2id, GD/Imagick, Verzeichnis außerhalb des Webroots). MySQL 8, SSH/SFTP, Domain auf Unterordner. Offen: mod_rewrite, Cron
-2. P1 Ordnerstruktur `api/`, Config außerhalb Webroot, `.htaccess`-Vorlagen
-3. P1 Migrationen + Schema `0001_init.sql`, Migrationsrunner
-4. P1 Router, JSON-Responses, Fehlerbehandlung, Validierung, Policy-Schicht
-5. P1 Registrierung, Login/Logout, Sessions, CSRF, Rate-Limit
-6. P1 Passwort zurücksetzen (Token + Mailversand via SMTP)
-7. P1 Hunde-CRUD + Foto-Upload (Re-Encoding, außerhalb Webroot)
-8. P1 Frontend: `src/api`-Client, Store auf API umstellen, Lade-/Fehlerzustände
-9. P2 PHPUnit-Tests für Auth & Berechtigungen, Vitest für API-Client
+| Ergebnis | Status |
+|---|---|
+| STRATO geprüft: PHP 8.4, MySQL 8, SSH, Domain auf Unterordner, keine Cronjobs | ✅ |
+| Projektstruktur `api/` (PHP 8.2+, ohne Laufzeit-Abhängigkeiten) | ✅ |
+| Migration `0001_init.sql` + `bin/migrate.php` | ✅ |
+| Router, JSON-Fehler ohne interne Details, Validierung, Logging ohne personenbezogene Daten | ✅ |
+| Registrierung, Login, Logout, Sessions (HttpOnly, SameSite=Lax, Secure), Session-Fixation-Schutz | ✅ |
+| CSRF-Token + Origin-Prüfung für alle schreibenden Anfragen | ✅ |
+| Rate-Limiting (Login, Registrierung, Reset), nur HMAC-Hashes gespeichert | ✅ |
+| Passwort zurücksetzen (Einmal-Token, 60 min, neutrale Antwort), Passwort ändern, andere Sitzungen beenden | ✅ |
+| Hunde-CRUD mit Berechtigungsprüfung, Foto-Upload (MIME-Prüfung, Neu-Kodierung, außerhalb Webroot) | ✅ |
+| Datenexport, Kontolöschung inkl. Dateien | ✅ |
+| Frontend: API-Client, echte Anmeldung, Onboarding, Hundeprofile aus der DB, Demo-Modus bleibt | ✅ |
+| Release-Skript, `.htaccess` mit CSP/HSTS, Deployment- & Backup-Anleitung | ✅ `docs/05-deployment.md` |
+| Tests: 24 PHPUnit-Integrationstests, 7 Vitest-Tests, Browser-E2E | ✅ |
+
+**Noch nicht live:** Das Deployment auf STRATO steht aus. Dafür fehlen noch Domain, Datenbankzugang und der mod_rewrite-Test.
+**Bewusst noch lokal (bis Phase 3/4):** Übungen, Pläne, Trainingseinheiten und Tagebuch werden im Live-Modus pro Konto im Browser gespeichert.
 
 ## Phase 3 – Physiotherapie (nach Freigabe)
 
@@ -58,3 +67,4 @@ Familienkonten · Therapeut:innen-Accounts & Praxen · Planzuweisung · Freigabe
 |---|---|
 | 2026-10-18 | Phase 1 abgeschlossen: Konzept, Designsystem, Architektur, Prototyp; 7 Unit-Tests für den Trainingsablauf grün; visuelle Prüfung mobil (390 px) und Desktop (1360 px) |
 | 2026-10-18 | STRATO-Hosting geprüft und Ergebnisse in `03-architektur.md` dokumentiert |
+| 2026-10-18 | Phase 2 umgesetzt: PHP-API, Auth, Hunde, Uploads, Tests, Release & Deployment-Anleitung |
