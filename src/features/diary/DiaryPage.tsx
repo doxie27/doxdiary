@@ -8,7 +8,8 @@ import type { DiaryCategory, DiaryEntry } from '../../data/types'
 import { dayKey } from '../../lib/date'
 import { cn, uid } from '../../lib/cn'
 import { fmt, relativeDay } from '../../lib/format'
-import { fileToDataUrl } from '../../lib/image'
+import { dataUrlToBlob, fileToDataUrl } from '../../lib/image'
+import { useLiveActions } from '../../store/useLiveActions'
 import { useStore } from '../../store/AppStore'
 
 export function DiaryPage() {
@@ -96,7 +97,9 @@ function toLocalInput(iso: string) {
 }
 
 function EntrySheet({ entry, onClose }: { entry: DiaryEntry; onClose: () => void }) {
-  const { state, dispatch } = useStore()
+  const { state } = useStore()
+  const { saveEntry, removeEntry } = useLiveActions()
+  const [busy, setBusy] = useState(false)
   const toast = useToast()
   const isNew = !state.diary.some((e) => e.id === entry.id)
   const [e, setE] = useState(entry)
@@ -104,11 +107,28 @@ function EntrySheet({ entry, onClose }: { entry: DiaryEntry; onClose: () => void
   const fileRef = useRef<HTMLInputElement>(null)
   const set = <K extends keyof DiaryEntry>(k: K, v: DiaryEntry[K]) => setE((x) => ({ ...x, [k]: v }))
 
+  const attempt = async (fn: () => Promise<void>) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await fn()
+    } catch (err) {
+      setError((err as Error).message || 'Speichern fehlgeschlagen.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const save = () => {
     if (!e.title.trim() && !e.text.trim()) return setError('Schreib einen Titel oder ein paar Worte.')
-    dispatch({ type: 'upsertDiary', entry: { ...e, title: e.title.trim() || diaryCategories[e.category].label } })
-    toast(isNew ? 'Eintrag gespeichert' : 'Änderungen gespeichert')
-    onClose()
+    attempt(async () => {
+      // Neue Fotos liegen als Data-URL vor, entfernte sind im Original, aber nicht mehr im Entwurf
+      const added = await Promise.all(e.photos.filter((p) => p.startsWith('data:') && !entry.photos.includes(p)).map(dataUrlToBlob))
+      const removed = entry.photos.filter((p) => !e.photos.includes(p))
+      await saveEntry({ ...e, title: e.title.trim() || diaryCategories[e.category].label }, added, removed)
+      toast(isNew ? 'Eintrag gespeichert' : 'Änderungen gespeichert')
+      onClose()
+    })
   }
 
   return (
@@ -118,8 +138,8 @@ function EntrySheet({ entry, onClose }: { entry: DiaryEntry; onClose: () => void
       title={isNew ? 'Neuer Eintrag' : 'Eintrag'}
       footer={
         <div className="flex gap-2.5">
-          {!isNew && <Button variant="danger" icon={Trash} aria-label="Eintrag löschen" onClick={() => { dispatch({ type: 'deleteDiary', id: e.id }); toast('Eintrag gelöscht'); onClose() }} />}
-          <Button block onClick={save}>Speichern</Button>
+          {!isNew && <Button variant="danger" icon={Trash} aria-label="Eintrag löschen" disabled={busy} onClick={() => attempt(async () => { await removeEntry(e.id); toast('Eintrag gelöscht'); onClose() })} />}
+          <Button block onClick={save} disabled={busy}>{busy ? 'Wird gespeichert …' : 'Speichern'}</Button>
         </div>
       }
     >
@@ -154,7 +174,7 @@ function EntrySheet({ entry, onClose }: { entry: DiaryEntry; onClose: () => void
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (x) => {
             const f = x.target.files?.[0]
             x.target.value = ''
-            if (f) set('photos', [...e.photos, await fileToDataUrl(f, 900)])
+            if (f) set('photos', [...e.photos, await fileToDataUrl(f, 1600)])
           }} />
         </div>
         {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}

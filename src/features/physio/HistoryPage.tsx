@@ -254,6 +254,7 @@ function SessionRow({ s }: { s: TrainingSession }) {
           <div className="truncate font-semibold">{s.planName}</div>
           <div className="text-sm text-ink-3">{relativeDay(s.startedAt)} · {fmt.time(s.startedAt)} Uhr · {done}/{s.results.length} Übungen</div>
         </div>
+        {s.pending && <span className="rounded-full bg-honey-100 px-2 py-0.5 text-[11px] font-semibold text-warn">wird übertragen</span>}
         {issue && <feedbackMeta.issue.icon className="size-4 text-alert" aria-label="Beschwerden notiert" />}
         <ChevronDown className={cn('size-4 text-ink-3 transition-transform', open && 'rotate-180')} />
       </button>
@@ -266,7 +267,7 @@ function SessionRow({ s }: { s: TrainingSession }) {
               return (
                 <li key={r.itemId} className="text-sm">
                   <div className="flex items-center justify-between gap-3">
-                    <span className={cn('font-medium', r.status === 'skipped' && 'text-ink-3 line-through')}>{ex?.name ?? 'Gelöschte Übung'}</span>
+                    <span className={cn('font-medium', r.status === 'skipped' && 'text-ink-3 line-through')}>{ex?.name ?? r.exerciseName ?? 'Gelöschte Übung'}</span>
                     {m ? <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold', m.tint)}><m.icon className="size-3" />{m.short}</span> : <span className="text-xs text-ink-3">übersprungen</span>}
                   </div>
                   {r.note && <p className="mt-0.5 text-ink-3">„{r.note}“</p>}

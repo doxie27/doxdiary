@@ -5,12 +5,14 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { Button, Card, IconButton, SectionHeader, Sheet, useToast } from '../../components/ui'
 import { fmt, relativeDay } from '../../lib/format'
 import { useStore } from '../../store/AppStore'
+import { useLiveActions } from '../../store/useLiveActions'
 import { dogSessions, estimateMinutes, resolveItem } from '../../store/selectors'
 import { CategoryTile, ParamLine, scheduleLabel, WeekdayDots } from './parts'
 
 export function PlanDetailPage() {
   const { id } = useParams()
-  const { state, dispatch, dog } = useStore()
+  const { state, dog } = useStore()
+  const { savePlan, removePlan } = useLiveActions()
   const navigate = useNavigate()
   const toast = useToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -32,8 +34,9 @@ export function PlanDetailPage() {
               icon={plan.archived ? ArchiveRestore : Archive}
               label={plan.archived ? 'Wiederherstellen' : 'Archivieren'}
               onClick={() => {
-                dispatch({ type: 'upsertPlan', plan: { ...plan, archived: !plan.archived } })
-                toast(plan.archived ? 'Plan wiederhergestellt' : 'Plan archiviert')
+                savePlan({ ...plan, archived: !plan.archived })
+                  .then(() => toast(plan.archived ? 'Plan wiederhergestellt' : 'Plan archiviert'))
+                  .catch((e: Error) => toast(e.message))
               }}
             />
             <IconButton icon={Pencil} label="Bearbeiten" onClick={() => navigate(`/training/plans/${plan.id}/edit`)} />
@@ -113,9 +116,12 @@ export function PlanDetailPage() {
             variant="danger"
             block
             onClick={() => {
-              dispatch({ type: 'deletePlan', id: plan.id })
-              toast('Plan gelöscht')
-              navigate('/training', { replace: true })
+              removePlan(plan.id)
+                .then(() => {
+                  toast('Plan gelöscht')
+                  navigate('/training', { replace: true })
+                })
+                .catch((e: Error) => toast(e.message))
             }}
           >
             Endgültig löschen

@@ -33,7 +33,7 @@ describe('sessionMachine', () => {
     let s = run(fresh(), { type: 'start' }, ...counts, { type: 'skipRest' }, ...counts)
     expect(s.phase).toBe('feedback')
     s = run(s, { type: 'feedback', feedback: 'hard', note: '  etwas müde ' })
-    expect(s.results).toEqual([{ itemId: 'p1i1', exerciseId: 'e1', status: 'done', feedback: 'hard', note: 'etwas müde' }])
+    expect(s.results).toEqual([{ itemId: 'p1i1', exerciseId: 'e1', exerciseName: 'Sitz-Steh-Wechsel', status: 'done', feedback: 'hard', note: 'etwas müde' }])
     expect(s.index).toBe(1)
     expect(s.timerLeft).toBe(30)
   })

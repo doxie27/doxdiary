@@ -6,12 +6,14 @@ import { Button, Card, IconButton, SectionHeader, Sheet, useToast } from '../../
 import { exerciseCategories } from '../../data/meta'
 import { duration } from '../../lib/format'
 import { useStore } from '../../store/AppStore'
+import { useLiveActions } from '../../store/useLiveActions'
 import { CategoryBadge } from './parts'
 import { ExerciseMedia } from './ExerciseMedia'
 
 export function ExerciseDetailPage() {
   const { id } = useParams()
-  const { state, dispatch } = useStore()
+  const { state } = useStore()
+  const { removeExercise } = useLiveActions()
   const navigate = useNavigate()
   const toast = useToast()
   const [confirm, setConfirm] = useState(false)
@@ -85,7 +87,7 @@ export function ExerciseDetailPage() {
           „{ex.name}“ wird aus der Bibliothek{plans.length ? ` und aus ${plans.length} ${plans.length === 1 ? 'Plan' : 'Plänen'}` : ''} entfernt. Der Trainingsverlauf bleibt erhalten.
         </p>
         <div className="mt-6 grid grid-cols-1 gap-2.5">
-          <Button variant="danger" block onClick={() => { dispatch({ type: 'deleteExercise', id: ex.id }); toast('Übung gelöscht'); navigate('/training/exercises', { replace: true }) }}>
+          <Button variant="danger" block onClick={() => removeExercise(ex.id).then(() => { toast('Übung gelöscht'); navigate('/training/exercises', { replace: true }) }).catch((e: Error) => toast(e.message))}>
             Endgültig löschen
           </Button>
           <Button variant="ghost" block onClick={() => setConfirm(false)}>Abbrechen</Button>

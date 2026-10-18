@@ -122,19 +122,19 @@ export function sessionReducer(s: SessionState, e: SessionEvent): SessionState {
       return s.phase === 'work' || s.phase === 'rest' ? { ...s, phase: 'feedback', timerRunning: false, pendingStatus: 'done' } : s
     case 'skipExercise': {
       if (!step || (s.phase !== 'work' && s.phase !== 'rest')) return s
-      const r: ExerciseResult = { itemId: step.itemId, exerciseId: step.exercise.id, status: 'skipped', feedback: null, note: '' }
+      const r: ExerciseResult = { itemId: step.itemId, exerciseId: step.exercise.id, exerciseName: step.exercise.name, status: 'skipped', feedback: null, note: '' }
       return nextExercise({ ...s, results: [...s.results, r] })
     }
     case 'feedback': {
       if (s.phase !== 'feedback' || !step) return s
-      const r: ExerciseResult = { itemId: step.itemId, exerciseId: step.exercise.id, status: 'done', feedback: e.feedback, note: e.note.trim() }
+      const r: ExerciseResult = { itemId: step.itemId, exerciseId: step.exercise.id, exerciseName: step.exercise.name, status: 'done', feedback: e.feedback, note: e.note.trim() }
       return nextExercise({ ...s, results: [...s.results, r] })
     }
     case 'finishEarly': {
       const done = new Set(s.results.map((r) => r.itemId))
       const rest: ExerciseResult[] = s.steps
         .filter((st) => !done.has(st.itemId))
-        .map((st) => ({ itemId: st.itemId, exerciseId: st.exercise.id, status: 'skipped', feedback: null, note: '' }))
+        .map((st) => ({ itemId: st.itemId, exerciseId: st.exercise.id, exerciseName: st.exercise.name, status: 'skipped', feedback: null, note: '' }))
       return { ...s, phase: 'summary', paused: false, timerRunning: false, results: [...s.results, ...rest] }
     }
   }

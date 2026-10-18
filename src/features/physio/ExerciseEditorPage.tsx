@@ -5,14 +5,20 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { Button, Select, Stepper, TextArea, TextField, useToast } from '../../components/ui'
 import type { Exercise, ExerciseCategory } from '../../data/types'
 import { uid } from '../../lib/cn'
-import { fileToDataUrl } from '../../lib/image'
+import { dataUrlToBlob, fileToDataUrl } from '../../lib/image'
+import { ApiError } from '../../api/client'
+import { useLiveActions } from '../../store/useLiveActions'
+import type { PhotoChange } from '../../store/useDogActions'
 import { useStore } from '../../store/AppStore'
 import { categoryOptions } from './ExerciseDetailPage'
 import { ExerciseMedia } from './ExerciseMedia'
 
 export function ExerciseEditorPage() {
   const { id } = useParams()
-  const { state, dispatch } = useStore()
+  const { state } = useStore()
+  const { saveExercise } = useLiveActions()
+  const [photo, setPhoto] = useState<PhotoChange>(null)
+  const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -47,9 +53,14 @@ export function ExerciseEditorPage() {
   const save = () => {
     if (!ex.name.trim()) return setError('Gib der Übung einen Namen.')
     if (!ex.reps && !ex.durationSec) return setError('Lege Wiederholungen oder eine Dauer fest.')
-    dispatch({ type: 'upsertExercise', exercise: { ...ex, name: ex.name.trim() } })
-    toast(existing ? 'Übung gespeichert' : 'Übung angelegt')
-    navigate(`/training/exercises/${ex.id}`, { replace: true })
+    setBusy(true)
+    saveExercise({ ...ex, name: ex.name.trim() }, photo)
+      .then((saved) => {
+        toast(existing ? 'Übung gespeichert' : 'Übung angelegt')
+        navigate(`/training/exercises/${saved.id}`, { replace: true })
+      })
+      .catch((e) => setError(e instanceof ApiError ? (Object.values(e.fields)[0] ?? e.message) : 'Speichern fehlgeschlagen.'))
+      .finally(() => setBusy(false))
   }
 
   return (
@@ -60,7 +71,7 @@ export function ExerciseEditorPage() {
           <ExerciseMedia exercise={ex} className="aspect-[16/9]" />
           <div className="absolute bottom-3 right-3 flex gap-2">
             {ex.mediaUrl && (
-              <button onClick={() => set('mediaUrl', null)} className="flex h-10 items-center gap-1.5 rounded-full bg-white/80 px-3.5 text-sm font-semibold backdrop-blur-md">
+              <button onClick={() => { set('mediaUrl', null); setPhoto('remove') }} className="flex h-10 items-center gap-1.5 rounded-full bg-white/80 px-3.5 text-sm font-semibold backdrop-blur-md">
                 <X className="size-4" /> Entfernen
               </button>
             )}
@@ -75,12 +86,15 @@ export function ExerciseEditorPage() {
             className="hidden"
             onChange={async (e) => {
               const f = e.target.files?.[0]
-              if (f) set('mediaUrl', await fileToDataUrl(f, 1080).catch(() => null))
+              if (!f) return
+              const url = await fileToDataUrl(f, 1600).catch(() => null)
+              if (!url) return setError('Das Bild konnte nicht gelesen werden.')
+              set('mediaUrl', url)
+              setPhoto({ file: await dataUrlToBlob(url) })
             }}
           />
         </div>
-        <p className="-mt-2 px-1 text-xs text-ink-3">Videos werden mit dem Backend in Phase 3 unterstützt.</p>
-
+        
         <TextField label="Name" value={ex.name} onChange={(e) => set('name', e.target.value)} placeholder="z. B. Sitz-Steh-Wechsel" maxLength={80} />
         <Select label="Kategorie" value={ex.category} onChange={(e) => set('category', e.target.value as ExerciseCategory)}>
           {categoryOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -115,7 +129,7 @@ export function ExerciseEditorPage() {
         {error && <p role="alert" className="rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
       </div>
       <div className="fixed inset-x-0 bottom-[84px] z-30 bg-gradient-to-t from-canvas via-canvas/95 to-transparent px-5 pb-3 pt-6 lg:static lg:mt-8 lg:bg-none lg:p-0 lg:px-8">
-        <Button size="lg" block icon={Check} className="shadow-float" onClick={save}>{existing ? 'Änderungen speichern' : 'Übung anlegen'}</Button>
+        <Button size="lg" block icon={Check} className="shadow-float" onClick={save} disabled={busy}>{existing ? 'Änderungen speichern' : 'Übung anlegen'}</Button>
       </div>
     </div>
   )

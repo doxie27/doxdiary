@@ -1,13 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
-import { createDemoState, demoExercises } from '../data/mock'
+import { createDemoState } from '../data/mock'
 import type { DiaryEntry, Dog, DogMembership, Exercise, ID, TrainingPlan, TrainingSession, User } from '../data/types'
 
 /**
  * Zentraler App-Zustand mit zwei Modi:
  * - demo: Prototyp mit Beispieldaten, alles nur im Browser (localStorage)
- * - live: Konto und Hundeprofile kommen von der PHP-API. Training und Tagebuch
- *   liegen bis Phase 3/4 noch lokal auf dem Gerät (pro Konto getrennt).
- * Server-Daten (Profil, Gesundheitshinweise) werden bewusst NICHT im
+ * - live: Alle Daten kommen von der PHP-API (siehe LiveSync). Im Browser bleibt
+ *   nur eine Warteschlange für noch nicht übertragene Trainingseinheiten.
+ * Server-Daten (Profil, Gesundheit, Tagebuch) werden bewusst NICHT im
  * localStorage abgelegt.
  */
 
@@ -17,6 +17,8 @@ export interface AppState {
   mode: Mode
   authed: boolean
   booting: boolean
+  /** Live-Modus: Training & Tagebuch vom Server geladen */
+  synced: boolean
   selectedDogId: ID
   user: User
   dogs: Dog[]
@@ -31,6 +33,8 @@ type Action =
   | { type: 'demoLogin' }
   | { type: 'liveSession'; user: User; dogs: Dog[] }
   | { type: 'bootDone' }
+  | { type: 'liveData'; exercises: Exercise[]; plans: TrainingPlan[]; sessions: TrainingSession[]; diary: DiaryEntry[] }
+  | { type: 'replaceSession'; localId: ID; session: TrainingSession }
   | { type: 'logout' }
   | { type: 'reset' }
   | { type: 'selectDog'; id: ID }
@@ -47,20 +51,27 @@ type Action =
 
 const DEMO_KEY = 'doxie-diary.prototype.v1'
 const MODE_KEY = 'doxie-diary.mode'
-const localKey = (userId: ID) => `doxie-diary.local.${userId}`
+/** Vor Phase 3/4 lagen Live-Daten lokal – wird von LiveSync einmalig importiert und gelöscht. */
+export const localKey = (userId: ID) => `doxie-diary.local.${userId}`
+const selectedKey = (userId: ID) => `doxie-diary.selected.${userId}`
 
-type LocalData = Pick<AppState, 'exercises' | 'plans' | 'sessions' | 'diary' | 'selectedDogId'>
+export type LocalData = Pick<AppState, 'exercises' | 'plans' | 'sessions' | 'diary' | 'selectedDogId'>
 
-function read<T>(key: string): T | null {
+export function read<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : null
+    if (raw === null) return null
+    try {
+      return JSON.parse(raw) as T
+    } catch {
+      return raw as T // einfache Textwerte (z. B. Modus)
+    }
   } catch {
     return null
   }
 }
 
-function write(key: string, value: unknown) {
+export function write(key: string, value: unknown) {
   try {
     localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value))
   } catch {
@@ -70,7 +81,7 @@ function write(key: string, value: unknown) {
 
 function demoState(): AppState {
   const demo = createDemoState()
-  return { mode: 'demo', authed: false, booting: false, selectedDogId: demo.dogs[0].id, ...demo }
+  return { mode: 'demo', authed: false, booting: false, synced: true, selectedDogId: demo.dogs[0].id, ...demo }
 }
 
 const emptyUser: User = { id: '', firstName: '', lastName: '', email: '', role: 'owner', createdAt: '' }
@@ -86,10 +97,6 @@ function load(): AppState {
   return { ...demoState(), mode: 'live', authed: false, booting: true, user: emptyUser, dogs: [], memberships: [] }
 }
 
-/** Startdaten für ein echtes Konto: Übungsvorlagen, sonst leer. */
-function liveLocal(userId: ID): LocalData {
-  return read<LocalData>(localKey(userId)) ?? { exercises: demoExercises, plans: [], sessions: [], diary: [], selectedDogId: '' }
-}
 
 function upsert<T extends { id: ID }>(list: T[], item: T): T[] {
   const i = list.findIndex((x) => x.id === item.id)
@@ -104,11 +111,12 @@ function reducer(state: AppState, a: Action): AppState {
     case 'demoLogin':
       return { ...demoState(), ...(read<AppState>(DEMO_KEY) ?? {}), mode: 'demo', authed: true, booting: false }
     case 'liveSession': {
-      const local = liveLocal(a.user.id)
-      const selected = a.dogs.some((d) => d.id === local.selectedDogId) ? local.selectedDogId : (a.dogs[0]?.id ?? '')
+      const remembered = read<string>(selectedKey(a.user.id)) ?? read<LocalData>(localKey(a.user.id))?.selectedDogId
+      const selected = a.dogs.some((d) => d.id === remembered) ? remembered! : (a.dogs[0]?.id ?? '')
+      const sameUser = state.mode === 'live' && state.user.id === a.user.id && state.synced
       return {
         ...state,
-        ...local,
+        ...(sameUser ? {} : { exercises: [], plans: [], sessions: [], diary: [], synced: false }),
         mode: 'live',
         authed: true,
         booting: false,
@@ -120,12 +128,16 @@ function reducer(state: AppState, a: Action): AppState {
     }
     case 'bootDone':
       return { ...state, booting: false }
+    case 'liveData':
+      return { ...state, exercises: a.exercises, plans: a.plans, sessions: a.sessions, diary: a.diary, synced: true }
+    case 'replaceSession':
+      return { ...state, sessions: [...state.sessions.filter((s) => s.id !== a.localId && s.id !== a.session.id), a.session] }
     case 'logout':
-      return state.mode === 'live' ? { ...state, authed: false, user: emptyUser, dogs: [], memberships: [] } : { ...state, authed: false }
-    case 'reset':
       return state.mode === 'live'
-        ? { ...state, exercises: demoExercises, plans: [], sessions: [], diary: [] }
-        : { ...demoState(), authed: true }
+        ? { ...state, authed: false, synced: false, user: emptyUser, dogs: [], memberships: [], exercises: [], plans: [], sessions: [], diary: [] }
+        : { ...state, authed: false }
+    case 'reset':
+      return state.mode === 'live' ? state : { ...demoState(), authed: true }
     case 'selectDog':
       return { ...state, selectedDogId: a.id }
     case 'updateUser':
@@ -192,8 +204,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       write(DEMO_KEY, state)
     } else if (state.authed) {
       write(MODE_KEY, 'live')
-      const local: LocalData = { exercises: state.exercises, plans: state.plans, sessions: state.sessions, diary: state.diary, selectedDogId: state.selectedDogId }
-      write(localKey(state.user.id), local)
+      write(selectedKey(state.user.id), state.selectedDogId)
     }
   }, [state])
 

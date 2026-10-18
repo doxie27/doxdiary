@@ -124,9 +124,8 @@ export function AccountPage() {
           {!live && <Button variant="secondary" icon={RotateCcw} block onClick={() => { dispatch({ type: 'reset' }); toast('Beispieldaten wiederhergestellt') }}>Beispieldaten zurücksetzen</Button>}
           <Button variant="ghost" icon={LogOut} block onClick={logout}>Abmelden</Button>
         </div>
-        {live && <p className="text-center text-xs text-ink-3">Hinweis: Training und Tagebuch werden derzeit noch nur auf diesem Gerät gespeichert. Die Synchronisierung folgt mit dem nächsten Update.</p>}
         <LegalLinks />
-        <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.2' : 'Demo mit Beispieldaten'}</p>
+        <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.3' : 'Demo mit Beispieldaten'}</p>
       </div>
 
       <Sheet open={editName} onClose={closeSheets} title="Profil bearbeiten">

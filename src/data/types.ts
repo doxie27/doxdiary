@@ -113,6 +113,8 @@ export type ExerciseFeedback = 'good' | 'hard' | 'issue'
 export interface ExerciseResult {
   itemId: ID
   exerciseId: ID
+  /** Name zum Zeitpunkt des Trainings – bleibt erhalten, wenn die Übung später gelöscht wird */
+  exerciseName?: string
   status: 'done' | 'skipped'
   feedback: ExerciseFeedback | null
   note: string
@@ -128,6 +130,8 @@ export interface TrainingSession {
   activeSec: number
   results: ExerciseResult[]
   note: string
+  /** Noch nicht zum Server übertragen (z. B. Funkloch) */
+  pending?: boolean
 }
 
 export type DiaryCategory = 'alltag' | 'gesundheit' | 'verhalten' | 'training' | 'erlebnis'

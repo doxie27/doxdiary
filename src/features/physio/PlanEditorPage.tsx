@@ -6,13 +6,17 @@ import { Button, Card, Sheet, Stepper, TextArea, TextField, useToast } from '../
 import type { PlanItem, TrainingPlan, Weekday } from '../../data/types'
 import { cn, uid } from '../../lib/cn'
 import { weekdayShort } from '../../lib/format'
+import { ApiError } from '../../api/client'
 import { useStore } from '../../store/AppStore'
+import { useLiveActions } from '../../store/useLiveActions'
 import { estimateMinutes, resolveItem } from '../../store/selectors'
 import { CategoryTile, ParamLine } from './parts'
 
 export function PlanEditorPage() {
   const { id } = useParams()
-  const { state, dispatch, dog } = useStore()
+  const { state, dog } = useStore()
+  const { savePlan } = useLiveActions()
+  const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
   const existing = state.plans.find((p) => p.id === id && p.dogId === dog.id)
@@ -49,9 +53,14 @@ export function PlanEditorPage() {
   const save = () => {
     if (!plan.name.trim()) return setError('Gib dem Plan einen Namen.')
     if (plan.items.length === 0) return setError('Füge mindestens eine Übung hinzu.')
-    dispatch({ type: 'upsertPlan', plan: { ...plan, name: plan.name.trim() } })
-    toast(existing ? 'Plan gespeichert' : 'Plan erstellt')
-    navigate(`/training/plans/${plan.id}`, { replace: true })
+    setBusy(true)
+    savePlan({ ...plan, name: plan.name.trim() })
+      .then((saved) => {
+        toast(existing ? 'Plan gespeichert' : 'Plan erstellt')
+        navigate(`/training/plans/${saved.id}`, { replace: true })
+      })
+      .catch((e) => setError(e instanceof ApiError ? (Object.values(e.fields)[0] ?? e.message) : 'Speichern fehlgeschlagen.'))
+      .finally(() => setBusy(false))
   }
 
   return (
@@ -134,7 +143,7 @@ export function PlanEditorPage() {
       </div>
 
       <div className="fixed inset-x-0 bottom-[84px] z-30 bg-gradient-to-t from-canvas via-canvas/95 to-transparent px-5 pb-3 pt-6 lg:static lg:mt-8 lg:bg-none lg:p-0 lg:px-8">
-        <Button size="lg" block icon={Check} className="shadow-float" onClick={save}>
+        <Button size="lg" block icon={Check} className="shadow-float" onClick={save} disabled={busy}>
           {existing ? 'Änderungen speichern' : 'Plan erstellen'}
         </Button>
       </div>

@@ -251,6 +251,13 @@ export function ResetConfirmPage() {
   )
 }
 
+/** Ein Link wird nur einmal eingelöst – auch bei doppeltem Rendern oder Antippen. */
+const verifications = new Map<string, Promise<unknown>>()
+const verifyOnce = (token: string) => {
+  if (!verifications.has(token)) verifications.set(token, authApi.verifyEmail(token))
+  return verifications.get(token)!
+}
+
 /** Ziel des Bestätigungslinks: /verify-email?token=… – funktioniert mit und ohne Anmeldung. */
 export function VerifyEmailPage() {
   const [params] = useSearchParams()
@@ -262,8 +269,7 @@ export function VerifyEmailPage() {
   useEffect(() => {
     if (!token) return
     let cancelled = false
-    authApi
-      .verifyEmail(token)
+    verifyOnce(token)
       .then(() => !cancelled && setStatus('ok'))
       .catch((e) => {
         if (cancelled) return

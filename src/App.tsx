@@ -20,6 +20,7 @@ import { PlanEditorPage } from './features/physio/PlanEditorPage'
 import { PlansPage } from './features/physio/PlansPage'
 import { SessionPage } from './features/physio/SessionPage'
 import { AppStoreProvider, useStore } from './store/AppStore'
+import { LiveSync } from './store/LiveSync'
 
 // Hash-Routing für Vorschau-Builds ohne Server-Rewrite; Standard ist History-Routing
 // (STRATO: .htaccess-Fallback auf index.html, siehe docs/03-architektur.md).
@@ -48,7 +49,7 @@ function Splash() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { state } = useStore()
-  if (state.booting) return <Splash />
+  if (state.booting || (state.authed && !state.synced)) return <Splash />
   return state.authed ? children : <Navigate to="/welcome" replace />
 }
 
@@ -70,6 +71,7 @@ export default function App() {
       <ToastProvider>
         <Router basename={import.meta.env.VITE_ROUTER === 'hash' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
           <SessionBoot />
+          <LiveSync />
           <Routes>
             <Route path="/welcome" element={<PublicOnly><WelcomePage /></PublicOnly>} />
             <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />

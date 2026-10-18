@@ -1,4 +1,6 @@
-import { Check, ChevronDown, Info, Pause, Play, RotateCcw, SkipForward, Undo2, X } from 'lucide-react'
+import { Check, ChevronDown, Info, Pause, Play, RotateCcw, SkipForward, Undo2, Volume2, VolumeX, X } from 'lucide-react'
+import { chime, setSoundEnabled, soundEnabled, unlockSound } from '../../lib/sound'
+import { useLiveActions } from '../../store/useLiveActions'
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Button, DogPortrait, IconButton, ProgressRing, Sheet, useToast } from '../../components/ui'
@@ -21,7 +23,10 @@ export function SessionPage() {
 }
 
 function SessionRunner({ planId, planName, steps }: { planId: string; planName: string; steps: ReturnType<typeof buildSteps> }) {
-  const { dispatch: storeDispatch, dog } = useStore()
+  const { dog } = useStore()
+  const { saveSession } = useLiveActions()
+  const [sound, setSound] = useState(soundEnabled)
+  const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
   const [s, dispatch] = useReducer(sessionReducer, steps, initSession)
@@ -35,17 +40,41 @@ function SessionRunner({ planId, planName, steps }: { planId: string; planName: 
     return () => clearInterval(t)
   }, [])
 
-  // Haptisches Feedback beim Phasenwechsel (sofern vom Gerät unterstützt)
+  // Haptik + Signalton beim Phasenwechsel (Pause beginnt/endet, Übung geschafft)
   const lastPhase = useRef(s.phase)
   useEffect(() => {
-    if (lastPhase.current !== s.phase && (s.phase === 'rest' || s.phase === 'feedback')) navigator.vibrate?.(120)
+    const prev = lastPhase.current
+    if (prev !== s.phase && (s.phase === 'rest' || s.phase === 'feedback' || (prev === 'rest' && s.phase === 'work'))) {
+      navigator.vibrate?.(120)
+      chime()
+    }
     lastPhase.current = s.phase
   }, [s.phase])
 
-  const save = (note: string) => {
-    storeDispatch({
-      type: 'addSession',
-      session: {
+  // Bildschirm während des Trainings anlassen (Screen Wake Lock), soweit unterstützt
+  useEffect(() => {
+    let lock: WakeLockSentinel | null = null
+    const request = async () => {
+      try {
+        lock = (await navigator.wakeLock?.request('screen')) ?? null
+      } catch {
+        lock = null
+      }
+    }
+    const onVisible = () => document.visibilityState === 'visible' && request()
+    request()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      void lock?.release().catch(() => null)
+    }
+  }, [])
+
+  const save = async (note: string) => {
+    if (saving) return
+    setSaving(true)
+    try {
+      const { pending } = await saveSession({
         id: uid('session'),
         dogId: dog.id,
         planId,
@@ -55,10 +84,13 @@ function SessionRunner({ planId, planName, steps }: { planId: string; planName: 
         activeSec: s.activeSec,
         results: s.results,
         note: note.trim(),
-      },
-    })
-    toast('Einheit gespeichert')
-    navigate('/training/history', { replace: true })
+      })
+      toast(pending ? 'Gespeichert – wird übertragen, sobald du online bist' : 'Einheit gespeichert')
+      navigate('/training/history', { replace: true })
+    } catch (e) {
+      toast((e as Error).message)
+      setSaving(false)
+    }
   }
 
   const close = () => (s.phase === 'intro' ? navigate(-1) : setLeave(true))
@@ -69,6 +101,7 @@ function SessionRunner({ planId, planName, steps }: { planId: string; planName: 
       <header className="sticky top-0 z-20 bg-canvas/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="mx-auto flex max-w-xl items-center gap-3">
           <IconButton icon={X} label="Training verlassen" variant="ghost" onClick={close} />
+          <span className="size-11" />
           <div className="min-w-0 flex-1 text-center">
             <div className="truncate text-sm font-semibold">{planName}</div>
             {s.phase !== 'intro' && s.phase !== 'summary' && (
@@ -77,6 +110,16 @@ function SessionRunner({ planId, planName, steps }: { planId: string; planName: 
               </div>
             )}
           </div>
+          <IconButton
+            icon={sound ? Volume2 : VolumeX}
+            label={sound ? 'Signalton aus' : 'Signalton an'}
+            variant="ghost"
+            onClick={() => {
+              setSoundEnabled(!sound)
+              setSound(!sound)
+              unlockSound()
+            }}
+          />
           {s.phase !== 'intro' && s.phase !== 'summary' ? (
             <IconButton icon={Pause} label="Training pausieren" variant="ghost" onClick={() => dispatch({ type: 'pause' })} />
           ) : (
@@ -101,7 +144,7 @@ function SessionRunner({ planId, planName, steps }: { planId: string; planName: 
       </header>
 
       <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-        {s.phase === 'intro' && <Intro steps={steps} dogName={dog.name} onStart={() => dispatch({ type: 'start' })} />}
+        {s.phase === 'intro' && <Intro steps={steps} dogName={dog.name} onStart={() => { unlockSound(); dispatch({ type: 'start' }) }} />}
         {s.phase === 'work' && step && <Work s={s} dispatch={dispatch} />}
         {s.phase === 'rest' && step && <Rest s={s} dispatch={dispatch} />}
         {s.phase === 'feedback' && step && <Feedback key={step.itemId} name={step.exercise.name} isLast={s.index === steps.length - 1} onSubmit={(feedback, note) => dispatch({ type: 'feedback', feedback, note })} onStop={() => dispatch({ type: 'finishEarly' })} />}
