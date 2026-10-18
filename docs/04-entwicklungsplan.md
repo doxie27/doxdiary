@@ -37,23 +37,38 @@ Willkommen & Auth-Oberflächen (ohne echte Anmeldung) · Dashboard · Hund wechs
 **Noch nicht live:** Das Deployment auf STRATO steht aus. Dafür fehlen noch Domain, Datenbankzugang und der mod_rewrite-Test.
 **Bewusst noch lokal (bis Phase 3/4):** Übungen, Pläne, Trainingseinheiten und Tagebuch werden im Live-Modus pro Konto im Browser gespeichert.
 
-## Phase 3 – Physiotherapie (nach Freigabe)
+## Live-Stand (2026-10-18)
 
-1. P1 Übungen-API inkl. Hilfsmittel & Medien (Bild; Video mit Größenlimit)
-2. P1 Pläne-API mit Items, Reihenfolge, Wochentagen, Archiv
-3. P1 Einheiten speichern (Snapshots), Verlauf-Endpoints mit Aggregation
-4. P1 Trainingsmodus an API anbinden, Zwischenstand bei Abbruch lokal sichern
-5. P2 Bildschirm wach halten (Wake Lock API) während des Trainings
-6. P2 Akustisches Signal am Timer-Ende (optional, abschaltbar)
-7. P3 Wiederkehrende Erinnerungen (Push erst mit PWA/Capacitor)
+Läuft unter https://www.doxiewerk.de/doxiediary/: Health-Check grün (App + Datenbank), Passwort-Reset-Mail kommt an, neues Logo eingespielt.
+
+## Phase 3 – Betrieb & Physiotherapie (nächste Schritte, priorisiert)
+
+**3a · Absichern & Betrieb** (klein, zuerst)
+1. P1 `phase-2` per Pull Request nach `main` übernehmen, danach eigener Branch für Phase 3
+2. P1 E-Mail-Bestätigung: Link nach Registrierung (48 h), App sofort nutzbar mit Hinweis, „Mail erneut senden“, unbestätigte Konten nach 7 Tagen löschen (vorher Erinnerung)
+3. P1 Admin-Basis (Admin-E-Mail nur in `config.php`): Systemstatus, geschützter Backup-Download (DB-Dump + Uploads), Admin-Aktionsprotokoll ohne Inhalte
+4. P1 Aufräumjobs ohne Cron: gelegentlich bei normalen Anfragen (alte Rate-Limit-Einträge, abgelaufene Tokens, unbestätigte Konten)
+5. P2 Rechtliches vorbereiten: Impressum-/Datenschutz-Links in der App (Texte von dir bzw. rechtlich geprüft)
+
+**3b · Physiotherapie auf den Server** (Kern)
+6. P1 Migration `0002`: Übungen, Hilfsmittel, Pläne, Plan-Übungen, Einheiten, Ergebnisse (mit Snapshots)
+7. P1 API + Tests: Übungen (inkl. Foto), Pläne (Reihenfolge, Werte, Tage, Archiv), Einheiten speichern, Verlauf/Statistik
+8. P1 Frontend auf API umstellen, Startvorlagen-Übungen pro neuem Konto
+9. P1 Einmalige Übernahme bisher lokal gespeicherter Daten
+10. P1 Trainingsmodus robust: Einheit wird bei Verbindungsabbruch zwischengespeichert und nachgesendet
+11. P2 Bildschirm wach halten (Wake Lock), optionaler Signalton am Timer-Ende
+
+**3c · Admin-Erweiterung** (am Ende von Phase 3)
+12. P2 Kontoverwaltung: Liste, sperren/entsperren, löschen auf Anfrage, Reset-Mail auslösen – ohne Einsicht in Hunde-, Gesundheits- oder Tagebuchdaten
+13. P2 Kennzahlen ohne Personenbezug (Konten, Hunde, Einheiten pro Woche)
 
 ## Phase 4 – Tagebuch, PWA, Qualität, Deployment (nach Freigabe)
 
-1. P1 Tagebuch-API mit Fotos
+1. P1 Tagebuch-API mit Fotos (inkl. Übernahme lokaler Einträge)
 2. P1 PWA: Service Worker, Icons (PNG/maskable), Installationshinweis iOS/Android
 3. P1 Mobile Feinschliff: Safe Areas, iOS-Tastatur, Pull-to-refresh-Verhalten
 4. P1 Tests: Vitest-Komponententests, Playwright-E2E für Kernabläufe, Lighthouse/Accessibility
-5. P1 Deployment: Build-Skript, SFTP-Upload, Backup-Cron, Wiederherstellungstest
+5. P1 Wiederherstellungstest mit zweiter Datenbank, automatischer Backup-Abruf über die Windows-Aufgabenplanung
 6. P2 Dark Mode
 7. P2 Rechtliches vorbereiten (Datenschutzerklärung, Impressum) – rechtliche Prüfung extern
 
@@ -68,3 +83,4 @@ Familienkonten · Therapeut:innen-Accounts & Praxen · Planzuweisung · Freigabe
 | 2026-10-18 | Phase 1 abgeschlossen: Konzept, Designsystem, Architektur, Prototyp; 7 Unit-Tests für den Trainingsablauf grün; visuelle Prüfung mobil (390 px) und Desktop (1360 px) |
 | 2026-10-18 | STRATO-Hosting geprüft und Ergebnisse in `03-architektur.md` dokumentiert |
 | 2026-10-18 | Phase 2 umgesetzt: PHP-API, Auth, Hunde, Uploads, Tests, Release & Deployment-Anleitung |
+| 2026-10-18 | Live auf www.doxiewerk.de/doxiediary/, Logo aktualisiert, Phase-3-Plan priorisiert (Betrieb vor Physio-Server) |
