@@ -4,7 +4,7 @@ import { useId } from 'react'
 import { cn } from '../../lib/cn'
 
 const control =
-  'w-full rounded-2xl border border-line bg-surface px-4 text-[15px] text-ink placeholder:text-ink-3/70 transition focus:border-sage-400 focus:outline-none focus:ring-4 focus:ring-sage-100'
+  'w-full rounded-2xl border border-line bg-surface px-4 text-base text-ink placeholder:text-ink-3/70 transition focus:border-sage-400 focus:outline-none focus:ring-4 focus:ring-sage-100'
 
 function Label({ htmlFor, label, hint }: { htmlFor: string; label: string; hint?: string }) {
   return (

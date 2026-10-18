@@ -6,6 +6,7 @@ import { useStore } from '../../store/AppStore'
 import { todaysPlans } from '../../store/selectors'
 import { DogPortrait, LogoMark, Sheet } from '../ui'
 import { DogSwitcher } from './DogSwitcher'
+import { StatusBanners } from './StatusBanners'
 import { VerifyBanner } from './VerifyBanner'
 
 const nav = [
@@ -80,6 +81,7 @@ export function AppShell() {
 
       <main className="min-w-0 flex-1 pb-28 lg:pb-12">
         <div key={location.pathname} className="mx-auto w-full max-w-3xl animate-fade">
+          <StatusBanners />
           <VerifyBanner />
           <Outlet context={{ openSwitcher: () => setSwitcher(true) }} />
         </div>

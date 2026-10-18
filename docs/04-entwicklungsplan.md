@@ -41,36 +41,40 @@ Willkommen & Auth-Oberflächen (ohne echte Anmeldung) · Dashboard · Hund wechs
 
 Läuft unter https://www.doxiewerk.de/doxiediary/: Health-Check grün (App + Datenbank), Passwort-Reset-Mail kommt an, neues Logo eingespielt.
 
-## Phase 3 – Betrieb & Physiotherapie (nächste Schritte, priorisiert)
+## Phase 3 – Betrieb & Physiotherapie ✅
 
-**3a · Absichern & Betrieb** (klein, zuerst)
-1. P1 `phase-2` per Pull Request nach `main` übernehmen, danach eigener Branch für Phase 3
-2. P1 E-Mail-Bestätigung: Link nach Registrierung (48 h), App sofort nutzbar mit Hinweis, „Mail erneut senden“, unbestätigte Konten nach 7 Tagen löschen (vorher Erinnerung)
-3. P1 Admin-Basis (Admin-E-Mail nur in `config.php`): Systemstatus, geschützter Backup-Download (DB-Dump + Uploads), Admin-Aktionsprotokoll ohne Inhalte
-4. P1 Aufräumjobs ohne Cron: gelegentlich bei normalen Anfragen (alte Rate-Limit-Einträge, abgelaufene Tokens, unbestätigte Konten)
-5. P2 Rechtliches vorbereiten: Impressum-/Datenschutz-Links in der App (Texte von dir bzw. rechtlich geprüft)
+| Ergebnis | Status |
+|---|---|
+| `phase-2` nach `main` übernommen (Fast-Forward), Arbeit in `phase-3` | ✅ |
+| E-Mail-Bestätigung: Link 48 h, Hinweis in der App, erneut senden, Erinnerung nach 5 Tagen, Löschung nach 7 Tagen; Bestandskonten gelten als bestätigt | ✅ |
+| Wartung ohne Cron (nach der Antwort, max. stündlich, Dateisperre) | ✅ |
+| Admin (nur bestätigte Adressen aus `config.php`): Status, Kennzahlen, Kontoliste, sperren/entsperren, Reset-Mail, löschen, Protokoll – ohne Einsicht in Inhalte | ✅ |
+| Backup: AES-256-verschlüsseltes ZIP (SQL-Dump in PHP + Fotos), per App oder per Token automatisch | ✅ |
+| Physiotherapie auf dem Server: Übungen (inkl. Foto, Startvorlagen), Pläne (Reihenfolge, Werte, Tage, Archiv), Einheiten (Snapshots, idempotent) | ✅ |
+| Offline-Warteschlange für Trainingseinheiten, Wake Lock, Signalton | ✅ |
+| Impressum/Datenschutz-Links aus der Konfiguration | ✅ (Datenschutzerklärung selbst: offen, rechtliche Prüfung) |
 
-**3b · Physiotherapie auf den Server** (Kern)
-6. P1 Migration `0002`: Übungen, Hilfsmittel, Pläne, Plan-Übungen, Einheiten, Ergebnisse (mit Snapshots)
-7. P1 API + Tests: Übungen (inkl. Foto), Pläne (Reihenfolge, Werte, Tage, Archiv), Einheiten speichern, Verlauf/Statistik
-8. P1 Frontend auf API umstellen, Startvorlagen-Übungen pro neuem Konto
-9. P1 Einmalige Übernahme bisher lokal gespeicherter Daten
-10. P1 Trainingsmodus robust: Einheit wird bei Verbindungsabbruch zwischengespeichert und nachgesendet
-11. P2 Bildschirm wach halten (Wake Lock), optionaler Signalton am Timer-Ende
+## Phase 4 – Tagebuch, PWA, Qualität ✅
 
-**3c · Admin-Erweiterung** (am Ende von Phase 3)
-12. P2 Kontoverwaltung: Liste, sperren/entsperren, löschen auf Anfrage, Reset-Mail auslösen – ohne Einsicht in Hunde-, Gesundheits- oder Tagebuchdaten
-13. P2 Kennzahlen ohne Personenbezug (Konten, Hunde, Einheiten pro Woche)
+| Ergebnis | Status |
+|---|---|
+| Tagebuch auf dem Server, bis zu 4 Fotos pro Eintrag | ✅ |
+| Einmaliger Import alter lokaler Daten inkl. Fotos, danach aus dem Browser gelöscht | ✅ |
+| Keine Trainings-/Tagebuchinhalte mehr im localStorage | ✅ |
+| PWA: eigener Service Worker (App-Hülle offline, API nie gecacht), Update-Hinweis, Installationsanleitung iOS/Android | ✅ |
+| Offline-Start: Hinweis „Keine Verbindung“ statt Abmeldung | ✅ |
+| Mobile: kein Auto-Zoom auf iOS (16-px-Eingaben), Safe Areas | ✅ |
+| Tests: 48 PHPUnit, 14 Vitest, E2E-Skript `e2e/live-flow.mjs` (12 Schritte) | ✅ |
+| Windows-Skript für automatischen Backup-Abruf, Wiederherstellungsanleitung | ✅ |
 
-## Phase 4 – Tagebuch, PWA, Qualität, Deployment (nach Freigabe)
+## Nächste Ideen
 
-1. P1 Tagebuch-API mit Fotos (inkl. Übernahme lokaler Einträge)
-2. P1 PWA: Service Worker, Icons (PNG/maskable), Installationshinweis iOS/Android
-3. P1 Mobile Feinschliff: Safe Areas, iOS-Tastatur, Pull-to-refresh-Verhalten
-4. P1 Tests: Vitest-Komponententests, Playwright-E2E für Kernabläufe, Lighthouse/Accessibility
-5. P1 Wiederherstellungstest mit zweiter Datenbank, automatischer Backup-Abruf über die Windows-Aufgabenplanung
-6. P2 Dark Mode
-7. P2 Rechtliches vorbereiten (Datenschutzerklärung, Impressum) – rechtliche Prüfung extern
+1. P2 Dark Mode (Tokens sind vorbereitet)
+2. P2 Datenschutzerklärung für die App fertigstellen (Verarbeitungsübersicht liefere ich, rechtliche Prüfung extern)
+3. P2 E-Mail-Adresse ändern (mit Bestätigung der neuen Adresse)
+4. P3 Erinnerungen (Web Push) an geplante Trainings
+5. P3 Zwei-Faktor-Anmeldung für das Admin-Konto
+6. P3 Video-Uploads für Übungen
 
 ## Später (Architektur vorbereitet)
 
@@ -84,3 +88,4 @@ Familienkonten · Therapeut:innen-Accounts & Praxen · Planzuweisung · Freigabe
 | 2026-10-18 | STRATO-Hosting geprüft und Ergebnisse in `03-architektur.md` dokumentiert |
 | 2026-10-18 | Phase 2 umgesetzt: PHP-API, Auth, Hunde, Uploads, Tests, Release & Deployment-Anleitung |
 | 2026-10-18 | Live auf www.doxiewerk.de/doxiediary/, Logo aktualisiert, Phase-3-Plan priorisiert (Betrieb vor Physio-Server) |
+| 2026-10-18 | Phase 3 & 4 umgesetzt: Bestätigung, Admin, Backup, Physio & Tagebuch auf dem Server, Import, PWA, Offline |

@@ -40,7 +40,8 @@ export function LiveSync() {
         })
         flushPending(userId, dispatch)
       } catch (e) {
-        toast(e instanceof ApiError ? e.message : 'Daten konnten nicht geladen werden.')
+        if (e instanceof ApiError && e.status === 0) dispatch({ type: 'bootOffline' })
+        else toast(e instanceof ApiError ? e.message : 'Daten konnten nicht geladen werden.')
       } finally {
         running.current = false
       }

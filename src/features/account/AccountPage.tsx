@@ -1,5 +1,8 @@
-import { ChevronRight, Download, KeyRound, LogOut, Moon, RotateCcw, Shield, ShieldCheck, Stethoscope, Trash, Users } from 'lucide-react'
+import { ChevronRight, Download, KeyRound, LogOut, Moon, RotateCcw, Shield, ShieldCheck, Smartphone, Stethoscope, Trash, Users, Volume2 } from 'lucide-react'
 import { LegalLinks } from '../../components/layout/LegalLinks'
+import { InstallSheet } from '../../components/layout/InstallSheet'
+import { usePwa } from '../../pwa/usePwa'
+import { setSoundEnabled, soundEnabled } from '../../lib/sound'
 import { ApiError } from '../../api/client'
 import { authApi, meApi } from '../../api/endpoints'
 import { useState, type ReactNode } from 'react'
@@ -16,6 +19,9 @@ export function AccountPage() {
   const [editName, setEditName] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [changePw, setChangePw] = useState(false)
+  const [install, setInstall] = useState(false)
+  const [sound, setSound] = useState(soundEnabled)
+  const { standalone } = usePwa()
   const [name, setName] = useState(state.user.firstName)
   const [lastName, setLastName] = useState(state.user.lastName)
   const [password, setPassword] = useState('')
@@ -104,8 +110,10 @@ export function AccountPage() {
         </section>
 
         <section>
-          <SectionHeader title="Darstellung" />
+          <SectionHeader title="App & Darstellung" />
           <Card className="divide-y divide-line">
+            {!standalone && <Row icon={<IconTile><Smartphone className="size-4" /></IconTile>} label="Als App installieren" sub="Zum Startbildschirm hinzufügen" onClick={() => setInstall(true)} />}
+            <Row icon={<IconTile><Volume2 className="size-4" /></IconTile>} label="Signalton im Training" sub={sound ? 'An – bei Pausen und Timer-Ende' : 'Aus'} onClick={() => { setSoundEnabled(!sound); setSound(!sound) }} />
             <Row icon={<IconTile><Moon className="size-4" /></IconTile>} label="Dunkles Design" sub="Folgt in einer späteren Version" soon />
           </Card>
         </section>
@@ -127,6 +135,8 @@ export function AccountPage() {
         <LegalLinks />
         <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.3' : 'Demo mit Beispieldaten'}</p>
       </div>
+
+      <InstallSheet open={install} onClose={() => setInstall(false)} />
 
       <Sheet open={editName} onClose={closeSheets} title="Profil bearbeiten">
         <div className="space-y-4">

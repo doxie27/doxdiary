@@ -129,6 +129,21 @@ final class AdminTest extends TestCase
         self::assertSame('application/zip', $res->header('Content-Type'));
     }
 
+    public function testBackupRefusedWithoutEncryptionPassword(): void
+    {
+        // Testkonfiguration ohne backup.password
+        $config = new \Doxie\Support\Config(['backup' => ['password' => '']] + (fn () => $this->values)->call(doxie_config()));
+        $plain = new \Doxie\App($config);
+        $controller = new \Doxie\Controllers\AdminController($plain);
+        $method = new \ReflectionMethod($controller, 'sendBackup');
+        try {
+            $method->invoke($controller, null, 'backup');
+            self::fail('Unverschlüsseltes Backup darf nicht erstellt werden');
+        } catch (\Doxie\Http\HttpException $e) {
+            self::assertSame('backup_not_encrypted', $e->errorCode);
+        }
+    }
+
     public function testLegalLinksFromConfig(): void
     {
         $res = (new ApiClient())->get('/meta');

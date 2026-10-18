@@ -110,11 +110,12 @@ export function AdminPage() {
               <Line label="Fotos" value={`${sys.uploadsCount} · ${mb(sys.uploadsBytes)}`} />
               <Line label="Fehler (30 Tage)" value={String(sys.errorsLast30Days)} ok={sys.errorsLast30Days === 0} />
               <Line label="Mailversand" value={sys.mailDriver === 'smtp' ? 'SMTP' : sys.mailDriver} ok={sys.mailDriver === 'smtp'} />
-              <Line label="Backup verschlüsselt" value={sys.backupEncrypted ? 'Ja' : 'Nein – backup.password setzen'} ok={sys.backupEncrypted} />
+              <Line label="Backup-Passwort" value={sys.backupEncrypted ? 'Gesetzt' : 'Fehlt – in config.php setzen'} ok={sys.backupEncrypted} />
               <Line label="Automatische Abholung" value={sys.backupTokenConfigured ? 'Eingerichtet' : 'Nicht eingerichtet'} />
               <Line label="Letztes Backup" value={sys.lastBackupAt ? `${relativeDay(sys.lastBackupAt)}, ${fmt.time(sys.lastBackupAt)} Uhr` : 'Noch keines'} ok={!!sys.lastBackupAt && Date.now() - new Date(sys.lastBackupAt).getTime() < 8 * 86_400_000} />
             </Card>
-            <Button block icon={Download} className="mt-3" onClick={() => setBackupOpen(true)}>Backup herunterladen</Button>
+            <Button block icon={Download} className="mt-3" disabled={!sys.backupEncrypted} onClick={() => setBackupOpen(true)}>Backup herunterladen</Button>
+            {!sys.backupEncrypted && <p className="mt-2 px-1 text-xs text-ink-3">Backups werden nur verschlüsselt ausgegeben. Lege dafür <code>backup.password</code> in der config.php fest.</p>}
           </section>
         )}
 
@@ -219,7 +220,7 @@ function BackupSheet({ open, onClose, onDone, encrypted }: { open: boolean; onCl
   return (
     <Sheet open={open} onClose={onClose} title="Backup herunterladen">
       <p className="text-ink-2">Enthält die komplette Datenbank und alle Fotos als ZIP-Datei.</p>
-      <p className="mt-2 text-sm text-ink-3">{encrypted ? 'Die Datei ist mit deinem Backup-Passwort aus der config.php verschlüsselt (AES-256). Bewahre sie trotzdem sicher auf.' : 'Achtung: Die Datei ist nicht verschlüsselt. Setze backup.password in der config.php.'}</p>
+      <p className="mt-2 text-sm text-ink-3">{encrypted ? 'Die Datei ist mit deinem Backup-Passwort aus der config.php verschlüsselt (AES-256). Öffnen z. B. mit 7-Zip.' : 'Backup-Passwort fehlt in der config.php.'}</p>
       <TextField className="mt-5" label="Dein Passwort zur Bestätigung" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       {error && <p role="alert" className="mt-4 rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
       <Button block icon={Download} className="mt-5" disabled={busy || !password} onClick={download}>{busy ? 'Wird erstellt …' : 'Herunterladen'}</Button>

@@ -125,10 +125,16 @@ Bewusst **ohne Framework und ohne Laufzeit-Abhängigkeiten**: eigener Router, PD
 | `GET/PATCH /me`, `POST /me/password`, `GET /me/export`, `POST /me/delete` | Profil, Passwort ändern, Datenexport, Löschung (mit Passwortbestätigung) |
 | `GET/POST /dogs`, `GET/PATCH/DELETE /dogs/{id}`, `POST /dogs/{id}/photo` | Hunde |
 | `GET/POST /exercises`, `GET/PATCH/DELETE /exercises/{id}`, `POST /exercises/{id}/media` | Übungen |
-| `GET/POST /dogs/{id}/plans`, `GET/PATCH/DELETE /plans/{id}` | Trainingspläne (Items als Teil des Plans, Reihenfolge = Array-Index) |
-| `GET/POST /dogs/{id}/sessions`, `GET /sessions/{id}` | Trainingseinheiten |
-| `GET/POST /dogs/{id}/diary`, `PATCH/DELETE /diary/{id}` | Tagebuch |
+| `GET/POST /dogs/{id}/plans`, `PATCH/DELETE /plans/{id}` | Trainingspläne (Items als Teil des Plans, Reihenfolge = Array-Index) |
+| `GET/POST /dogs/{id}/sessions` | Trainingseinheiten (POST idempotent über `clientId`) |
+| `GET/POST /dogs/{id}/diary`, `PATCH/DELETE /diary/{id}`, `POST /diary/{id}/photos`, `DELETE /diary/{id}/photos/{mediaId}` | Tagebuch |
 | `GET /media/{id}` | Ausgabe privater Dateien **nur nach Berechtigungsprüfung** |
+| `POST /auth/email/verify`, `POST /me/email/resend` | E-Mail-Bestätigung |
+| `GET/POST /exercises`, `PATCH/DELETE /exercises/{id}`, `POST/DELETE /exercises/{id}/photo` | Übungsbibliothek (pro Konto, Startvorlagen) |
+| `POST /me/import` | Einmalige Übernahme lokaler Altdaten |
+| `GET /admin/status`, `GET /admin/users`, `GET /admin/audit`, `POST /admin/users/{id}/(lock\|unlock\|reset\|delete)` | Administration (für Nicht-Admins 404) |
+| `POST /admin/backup` (Passwort) · `GET /admin/backup` (Bearer-Token) | Verschlüsseltes Backup |
+| `GET /meta` | Impressum-/Datenschutz-Links |
 
 Fehlerformat einheitlich: `{ "error": { "code": "validation_failed", "message": "…", "fields": { "name": "…" } } }` – nie Stacktraces oder SQL.
 
@@ -214,9 +220,9 @@ Nummerierte SQL-Dateien in `api/migrations/`. `bin/migrate.php` (lokal per CLI o
 3. **Extern:** regelmäßiger Download der Backups (SFTP) auf ein eigenes Gerät / verschlüsselten Speicher.
 4. **Wiederherstellung** dokumentiert und **einmal pro Quartal getestet** (Dump in Test-DB einspielen, App gegen Test-DB starten).
 
-## PWA (Phase 4)
+## PWA
 
-`manifest.webmanifest` ist bereits angelegt. Später: `vite-plugin-pwa` (Workbox) mit App-Shell-Caching, PNG-Icons (192/512, maskable), Offline-Hinweis; API-Antworten werden **nicht** dauerhaft gecacht (sensible Daten).
+Eigener Service Worker (`src/pwa/`): Ein Build-Plugin trägt alle gehashten Dateien ein. Die App-Hülle (HTML, JS, CSS, Schriften, Icons) ist offline verfügbar. **API-Anfragen werden nie gecacht.** Neue Versionen werden in der App mit „Neu laden“ angeboten. Trainingseinheiten ohne Verbindung landen in einer Warteschlange und werden idempotent nachgesendet. Vorher keine Abhängigkeit von `vite-plugin-pwa`, weil die Kompatibilität mit Vite 8 unklar war.
 
 ## Capacitor (später)
 

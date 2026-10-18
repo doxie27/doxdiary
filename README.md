@@ -3,7 +3,7 @@
 **Dein Hund. Dein Alltag. Ein Ort für alles.**
 Modernes digitales Hundetagebuch mit Schwerpunkt Physiotherapie – als PWA, später auch nativ über Capacitor.
 
-> Status: **Phase 2 – PHP-Backend mit echter Anmeldung und Hundeprofilen.** Training und Tagebuch werden ab Phase 3/4 an den Server angebunden. Der Demo-Modus mit Beispieldaten funktioniert weiterhin ohne Server.
+> Status: **Version 0.3 – live unter https://www.doxiewerk.de/doxiediary/.** Konten mit E-Mail-Bestätigung, Hundeprofile, Physiotherapie und Tagebuch auf dem Server, Admin-Bereich mit verschlüsseltem Backup, installierbare PWA. Der Demo-Modus mit Beispieldaten funktioniert weiterhin ohne Server.
 
 ## Schnellstart (Windows, macOS, Linux)
 
@@ -34,6 +34,8 @@ Zusätzlich nötig: **PHP ≥ 8.2** (mit `pdo_mysql`, `gd`, `fileinfo`, `mbstrin
    Vite leitet `/api` automatisch an PHP weiter. Mails (z. B. Passwort-Reset) landen lokal als Dateien in `api/storage/mail/`.
 
 **API-Tests:** `cd api && composer install`, eine leere Datenbank `doxie_test` anlegen, dann `npm run api:test`. Die Zugangsdaten stehen in `api/tests/config.test.php` und lassen sich per Umgebungsvariable `DOXIE_TEST_DSN` / `DOXIE_TEST_DB_USER` / `DOXIE_TEST_DB_PASS` überschreiben.
+
+**Browser-Durchlauf (E2E):** Mit laufendem `npm run api` und `npm run dev` startet `node e2e/live-flow.mjs` einen kompletten Ablauf. Er prüft Registrierung, Bestätigung, Plan, Training (auch offline), Tagebuch mit Foto, Import und Admin-Backup. Unter Windows einmalig vorher `npx playwright install chromium` ausführen.
 
 **Deployment auf STRATO:** `npm run release`, dann weiter nach [docs/05-deployment.md](docs/05-deployment.md).
 

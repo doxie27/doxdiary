@@ -207,6 +207,10 @@ final class AdminController
 
     private function sendBackup(?int $adminId, string $action): Response
     {
+        // Ohne Verschlüsselung kein Backup: die Datei enthält Gesundheits- und Tagebuchdaten
+        if ((string) $this->app->config->get('backup.password', '') === '') {
+            throw new HttpException(422, 'backup_not_encrypted', 'Bitte zuerst in der config.php ein backup.password festlegen. Backups werden nur verschlüsselt ausgegeben.');
+        }
         $file = (new Backup($this->app))->create();
         $this->log($adminId, $action, null);
         return Response::download($file, 'doxie-diary-backup-' . gmdate('Y-m-d') . '.zip');

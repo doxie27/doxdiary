@@ -19,6 +19,8 @@ export interface AppState {
   booting: boolean
   /** Live-Modus: Training & Tagebuch vom Server geladen */
   synced: boolean
+  /** Start ohne Verbindung – Sitzung konnte nicht geprüft werden */
+  offlineBoot?: boolean
   selectedDogId: ID
   user: User
   dogs: Dog[]
@@ -33,6 +35,8 @@ type Action =
   | { type: 'demoLogin' }
   | { type: 'liveSession'; user: User; dogs: Dog[] }
   | { type: 'bootDone' }
+  | { type: 'bootOffline' }
+  | { type: 'retryBoot' }
   | { type: 'liveData'; exercises: Exercise[]; plans: TrainingPlan[]; sessions: TrainingSession[]; diary: DiaryEntry[] }
   | { type: 'replaceSession'; localId: ID; session: TrainingSession }
   | { type: 'logout' }
@@ -127,7 +131,11 @@ function reducer(state: AppState, a: Action): AppState {
       }
     }
     case 'bootDone':
-      return { ...state, booting: false }
+      return { ...state, booting: false, offlineBoot: false }
+    case 'bootOffline':
+      return { ...state, booting: false, offlineBoot: true }
+    case 'retryBoot':
+      return { ...state, booting: true, offlineBoot: false }
     case 'liveData':
       return { ...state, exercises: a.exercises, plans: a.plans, sessions: a.sessions, diary: a.diary, synced: true }
     case 'replaceSession':

@@ -1,7 +1,10 @@
 import { useEffect, type ReactNode } from 'react'
 import { authApi } from './api/endpoints'
+import { ApiError } from './api/client'
+import { WifiOff } from 'lucide-react'
+import { Button } from './components/ui'
 import { Brand } from './components/layout/AppShell'
-import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
 import { ToastProvider } from './components/ui'
 import { AccountPage } from './features/account/AccountPage'
@@ -26,6 +29,21 @@ import { LiveSync } from './store/LiveSync'
 // (STRATO: .htaccess-Fallback auf index.html, siehe docs/03-architektur.md).
 const Router = import.meta.env.VITE_ROUTER === 'hash' ? HashRouter : BrowserRouter
 
+/**
+ * „/doxiediary“ → „/doxiediary/“: Ohne Schrägstrich läge die Startseite außerhalb
+ * des Service-Worker-Bereichs und wäre offline nicht erreichbar.
+ */
+function TrailingSlash() {
+  const location = useLocation()
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL
+    if (base !== '/' && window.location.pathname + '/' === base) {
+      window.history.replaceState(window.history.state, '', base + window.location.search + window.location.hash)
+    }
+  }, [location])
+  return null
+}
+
 /** Prüft beim Start, ob noch eine gültige Server-Sitzung besteht. */
 function SessionBoot() {
   const { state, dispatch } = useStore()
@@ -34,7 +52,7 @@ function SessionBoot() {
     authApi
       .me()
       .then((session) => dispatch({ type: 'liveSession', ...session }))
-      .catch(() => dispatch({ type: 'bootDone' }))
+      .catch((e) => dispatch({ type: e instanceof ApiError && e.status === 0 ? 'bootOffline' : 'bootDone' }))
   }, [state.booting, dispatch])
   return null
 }
@@ -47,8 +65,25 @@ function Splash() {
   )
 }
 
+/** Start ohne Netz: nicht als „abgemeldet“ behandeln, sondern Verbindung anbieten. */
+function OfflineScreen() {
+  const { dispatch } = useStore()
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-8 text-center">
+      <Brand />
+      <WifiOff className="mt-6 size-8 text-ink-3" />
+      <div>
+        <h1 className="font-display text-2xl">Keine Verbindung</h1>
+        <p className="mt-2 max-w-xs text-ink-3">Doxie Diary braucht kurz Internet, um deine Daten zu laden. Bitte prüfe deine Verbindung.</p>
+      </div>
+      <Button onClick={() => dispatch({ type: 'retryBoot' })}>Erneut versuchen</Button>
+    </div>
+  )
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
   const { state } = useStore()
+  if (state.offlineBoot) return <OfflineScreen />
   if (state.booting || (state.authed && !state.synced)) return <Splash />
   return state.authed ? children : <Navigate to="/welcome" replace />
 }
@@ -61,6 +96,7 @@ function RequireDog({ children }: { children: ReactNode }) {
 
 function PublicOnly({ children }: { children: ReactNode }) {
   const { state } = useStore()
+  if (state.offlineBoot) return <OfflineScreen />
   if (state.booting) return <Splash />
   return state.authed ? <Navigate to="/" replace /> : children
 }
@@ -70,6 +106,7 @@ export default function App() {
     <AppStoreProvider>
       <ToastProvider>
         <Router basename={import.meta.env.VITE_ROUTER === 'hash' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
+          <TrailingSlash />
           <SessionBoot />
           <LiveSync />
           <Routes>
