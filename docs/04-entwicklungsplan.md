@@ -18,7 +18,7 @@ Willkommen & Auth-Oberflächen (ohne echte Anmeldung) · Dashboard · Hund wechs
 
 ## Phase 2 – Technische Basis (nach Freigabe)
 
-1. ✅ STRATO-Voraussetzungen geprüft (PHP 8.4, Argon2id, GD/Imagick, Verzeichnis außerhalb des Webroots). Offen: mod_rewrite, DB-Version, Cron, SSH
+1. ✅ STRATO-Voraussetzungen geprüft (PHP 8.4, Argon2id, GD/Imagick, Verzeichnis außerhalb des Webroots). MySQL 8, SSH/SFTP, Domain auf Unterordner. Offen: mod_rewrite, Cron
 2. P1 Ordnerstruktur `api/`, Config außerhalb Webroot, `.htaccess`-Vorlagen
 3. P1 Migrationen + Schema `0001_init.sql`, Migrationsrunner
 4. P1 Router, JSON-Responses, Fehlerbehandlung, Validierung, Policy-Schicht

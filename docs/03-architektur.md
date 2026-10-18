@@ -42,15 +42,20 @@ Ermittelt am 2026-10-18 mit `deploy/strato-check.php`. Das Skript wurde danach w
 | `exec` | möglich | `mysqldump` für Backups per PHP oder Cron |
 | Zeitzone | Europe/Berlin | Datenbank speichert UTC. Die Anzeige erfolgt im Frontend lokal. |
 
-**Noch offen** (nur im Kundenlogin sichtbar oder per Test zu prüfen):
+**Ergänzt durch Angaben aus dem Kundenlogin (2026-10-18):**
+
+| Punkt | Ergebnis | Konsequenz |
+|---|---|---|
+| Datenbanken | bis zu 25, MySQL 8 oder MariaDB wählbar | **MySQL 8.0**. Das Schema bleibt MariaDB-kompatibel: kein MySQL-spezifisches JSON-SQL, nur Standard-Typen. Eine Datenbank für Produktion, eine zweite für Staging bzw. Restore-Tests. |
+| SSH & SFTP | verfügbar | Deployment per `rsync`/SFTP, Migrationen per CLI (`php bin/migrate.php`), Backups per `mysqldump` |
+| Domain → Unterordner | möglich | Die Domain zeigt auf `<home>/doxie-public/`, der private Ordner liegt daneben. |
+
+**Noch offen:**
 
 | Punkt | Wo prüfen |
 |---|---|
-| `mod_rewrite` / `.htaccess` | Test-`.htaccess` in Phase 2 |
-| Anzahl & Version der Datenbanken (MySQL 8 / MariaDB) | Datenbanken verwalten |
-| SSH/SFTP | Zugänge |
-| Cronjobs | Hosting → Cronjobs (sonst Backup manuell oder per geschütztem Aufruf) |
-| Domain auf Unterordner zeigbar | Domainverwaltung |
+| `mod_rewrite` / `.htaccess` | Test zu Beginn von Phase 2 |
+| Cronjobs | Kundenlogin → Hosting-Paket → Verwaltung/Einstellungen. Falls kein Cron enthalten ist: Backup per SSH-Skript manuell oder über einen geschützten Backup-Endpunkt. |
 | SMTP-Postfach für Systemmails | E-Mail |
 
 ### Geplantes Verzeichnislayout auf STRATO
@@ -63,7 +68,7 @@ Ermittelt am 2026-10-18 mit `deploy/strato-check.php`. Das Skript wurde danach w
 │   ├── storage/sessions/   PHP-Sessions
 │   ├── storage/backups/    DB-Dumps (Rotation)
 │   └── app/                PHP-Quellcode (src/, vendor/, migrations/)
-└── <webroot>/              ← Domain zeigt hierher
+└── doxie-public/           ← Domain zeigt hierher (Webroot)
     ├── index.html, assets/ Vite-Build
     ├── .htaccess           SPA-Fallback, Sicherheitsheader
     └── api/index.php       Einziger PHP-Einstieg, lädt ../doxie-private/app
