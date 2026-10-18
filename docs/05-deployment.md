@@ -28,7 +28,7 @@ Die genaue Lage des Webroots wird nach dem ersten SFTP-Login festgelegt. Die üb
 
 1. **mod_rewrite testen:** Ordner `deploy/rewrite-test/` per SFTP in den aktuellen Webspace laden, `https://www.doxiewerk.de/rewrite-test/abc` aufrufen. Erwartet: „mod_rewrite funktioniert ✔“. Danach den Ordner löschen.
 2. **Datenbank anlegen:** STRATO-Kundenlogin → Datenbanken → **MariaDB**-Datenbank (angelegt: MariaDB 11.8). Host, Name und Benutzer notieren, das Passwort sicher aufbewahren.
-3. **Postfach anlegen:** z. B. `noreply@<domain>` für Systemmails (Passwort zurücksetzen).
+3. **Postfach anlegen:** `noreply@doxiewerk.de` für Systemmails (Passwort zurücksetzen).
 4. **Release bauen** (lokal unter Windows im Projektordner):
    ```bash
    npm install
