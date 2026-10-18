@@ -103,6 +103,12 @@
   input, textarea, select, button {
     font: inherit;
   }
+  /* iOS: Eingabefelder unter 16 px lösen Auto-Zoom aus */
+  @supports (-webkit-touch-callout: none) {
+    input, textarea, select {
+      font-size: max(16px, 1em);
+    }
+  }
 }
 
 @utility font-display {
