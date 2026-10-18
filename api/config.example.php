@@ -3,15 +3,13 @@
 /**
  * Kopieren nach config.php und Werte eintragen. config.php NIE committen.
  * STRATO: liegt in <home>/doxie-private/config.php (außerhalb des Webroots).
- *
- * Geheimnis erzeugen:  php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
  */
 
 return [
     'app' => [
         'env' => 'production',                 // 'development' zeigt Fehlermeldungen (ohne personenbezogene Daten)
         'url' => 'https://www.doxiewerk.de/doxiediary', // Basis-URL der App (Links in E-Mails, Origin-Prüfung)
-        'secret' => 'HIER-64-ZEICHEN-HEX',     // für HMAC (Rate-Limiting) – geheim halten
+        'secret' => '',                        // leer lassen: wird automatisch in storage/secret.key erzeugt
         'secure_cookies' => true,              // lokal ohne HTTPS: false
         'cookie_path' => '/doxiediary/',       // Session-Cookie nur für die App, nicht für die ganze Domain
         'allowed_origins' => ['https://doxiewerk.de'], // Aufruf ohne www; später z. B. 'capacitor://localhost'

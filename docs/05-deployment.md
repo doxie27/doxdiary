@@ -38,7 +38,7 @@ Die genaue Lage des Webroots wird nach dem ersten SFTP-Login festgelegt. Die üb
 5. **Hochladen** (WinSCP/FileZilla per SFTP): `doxiediary/` in den Webroot von doxiewerk.de, `doxie-private/` außerhalb davon (siehe Struktur oben).
 6. **Konfiguration:** auf dem Server `doxie-private/config.example.php` nach `doxie-private/config.php` kopieren und ausfüllen:
    - `app.url` = `https://www.doxiewerk.de/doxiediary`, `cookie_path` = `/doxiediary/`
-   - `app.secret` = Ausgabe von `php -r "echo bin2hex(random_bytes(32));"`
+   - `app.secret` leer lassen – der Server erzeugt ihn beim ersten Aufruf in `storage/secret.key`
    - `db.*` = Werte aus Schritt 2
    - `mail.*` = `noreply@doxiewerk.de` (`smtp.strato.de`, Port 465, `ssl`)
 7. **Datenbank-Schema anlegen** (per SSH):
@@ -48,7 +48,7 @@ Die genaue Lage des Webroots wird nach dem ersten SFTP-Login festgelegt. Die üb
    ```
 8. **Domain:** keine Änderung nötig, die App liegt als Unterordner in der bestehenden Website.
 9. **Prüfen:**
-   - `https://www.doxiewerk.de/doxiediary/api/v1/health` → `{"ok":true}`
+   - `https://www.doxiewerk.de/doxiediary/api/v1/health` → `{"ok":true,"db":true}` (bei `"db":false`: DB-Zugang in config.php oder Migration prüfen)
    - `https://www.doxiewerk.de/doxiediary/` → Willkommensseite, Registrierung, Hund anlegen, Foto hochladen
    - `doxie-private/` darf über keine URL erreichbar sein
    - Passwort-Reset-Mail kommt an

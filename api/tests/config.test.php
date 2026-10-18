@@ -2,7 +2,7 @@
 // Testkonfiguration: eigene Datenbank, temporärer Speicher, Mails als Dateien.
 $dsn = getenv('DOXIE_TEST_DSN') ?: 'mysql:host=127.0.0.1;dbname=doxie_test;charset=utf8mb4';
 return [
-    'app' => ['env' => 'development', 'url' => 'http://localhost:5173', 'secret' => 'test-secret-not-for-production-0000000000', 'secure_cookies' => false, 'allowed_origins' => []],
+    'app' => ['env' => 'development', 'url' => 'http://localhost:5173', 'secret' => '', 'secure_cookies' => false, 'allowed_origins' => []],
     'db' => ['dsn' => $dsn, 'user' => getenv('DOXIE_TEST_DB_USER') ?: 'doxie', 'pass' => getenv('DOXIE_TEST_DB_PASS') ?: 'devpass'],
     'paths' => ['storage' => sys_get_temp_dir() . '/doxie-test-storage'],
     // Tests registrieren viele Konten von einer IP – nur IP-Limits lockern, Konto-Limits bleiben

@@ -51,7 +51,7 @@ final class App
     public function media(): MediaRepository { return new MediaRepository($this->db()); }
     public function resets(): PasswordResetRepository { return new PasswordResetRepository($this->db()); }
     public function access(): DogAccess { return new DogAccess($this->db()); }
-    public function limiter(): RateLimiter { return new RateLimiter($this->db(), (string) $this->config->get('app.secret'), (array) $this->config->get('limits', [])); }
+    public function limiter(): RateLimiter { return new RateLimiter($this->db(), $this->config->secret(), (array) $this->config->get('limits', [])); }
     public function mailer(): Mailer { return MailerFactory::create($this->config); }
     public function images(): ImageStore { return new ImageStore($this->config->storagePath('uploads')); }
 
@@ -69,7 +69,7 @@ final class App
         $dogs = new DogController($this);
         $media = new MediaController($this);
 
-        $r->add('GET', '/health', static fn () => Response::json(['ok' => true]), auth: false);
+        $r->add('GET', '/health', $this->health(...), auth: false);
         $r->add('GET', '/auth/csrf', $auth->csrf(...), auth: false);
         $r->add('POST', '/auth/register', $auth->register(...), auth: false);
         $r->add('POST', '/auth/login', $auth->login(...), auth: false);
@@ -93,6 +93,18 @@ final class App
 
         $r->add('GET', '/media/{id}', $media->show(...));
         return $r;
+    }
+
+    /** Einfacher Betriebscheck: läuft PHP, ist die Datenbank erreichbar und migriert? */
+    private function health(Request $r): Response
+    {
+        try {
+            $this->db()->one('SELECT 1 FROM users LIMIT 1');
+            return Response::json(['ok' => true, 'db' => true]);
+        } catch (\Throwable $e) {
+            Log::error('health', $e);
+            return Response::json(['ok' => false, 'db' => false], 503);
+        }
     }
 
     public function handle(): Response

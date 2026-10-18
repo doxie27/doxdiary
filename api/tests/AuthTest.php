@@ -108,6 +108,11 @@ final class AuthTest extends TestCase
         self::assertStringContainsStringIgnoringCase('SameSite=Lax', $cookie);
     }
 
+    public function testHealthChecksDatabase(): void
+    {
+        self::assertSame(['ok' => true, 'db' => true], (new ApiClient())->get('/health')->json);
+    }
+
     public function testErrorsDoNotLeakInternals(): void
     {
         $res = (new ApiClient())->get('/gibt-es-nicht');
