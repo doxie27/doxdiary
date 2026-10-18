@@ -1,0 +1,20 @@
+import { cn } from '../../lib/cn'
+
+/**
+ * Doxie-Diary-Zeichen: ein „d“, dessen Oberlänge zum Dackelkopf wird.
+ * Gleiche Geometrie wie public/favicon.svg – Farben bewusst fix (Markenfarben).
+ */
+export function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={cn('shrink-0', className)} aria-hidden>
+      <rect width="100" height="100" rx="23" fill="#687F69" />
+      <g fill="#FBF8EF">
+        <path fillRule="evenodd" d="M45 42.5a19 19 0 1 0 0 38a19 19 0 1 0 0-38Zm1.5 8.6a10.4 10.4 0 1 1 0 20.8a10.4 10.4 0 1 1 0-20.8Z" />
+        <path d="M56.2 79.5V29.5C56.2 21.5 60 16.2 65 16.2C69.6 16.2 72.3 18.8 74.9 22.4L82.4 25.3C85.8 26.7 86.6 30.8 85 34C83.5 37 80.2 38.3 76.6 38.1H66V79.5C66 80.8 65.2 81.6 64 81.6H58.3C57 81.6 56.2 80.8 56.2 79.5Z" />
+        <path d="M27.4 61.2C21.6 59.9 17.6 55.2 17.2 49.3C17 46.9 20.3 46.4 20.9 48.6C22.1 52.8 25.4 55.6 29.6 56.2Z" />
+      </g>
+      <path d="M63.4 24.3C65.1 29.9 66.4 34.1 70.1 37.4" fill="none" stroke="#687F69" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="71.3" cy="26.2" r="1.4" fill="#2E3A30" />
+    </svg>
+  )
+}

@@ -6,6 +6,20 @@ Die Tokens leben in `src/index.css` (`@theme`, Tailwind v4). Komponenten verwend
 
 *Warm, ruhig, hochwertig.* Inspiration aus Wellness- und Fitness-Apps: viel Luft, wenige klare Flächen, eine ausdrucksstarke Display-Schrift für Emotion und eine sehr gut lesbare Grotesk für alles Funktionale.
 
+## Logo
+
+Ein „d“, dessen Oberlänge zum Dackelkopf mit Ohr, Auge und Schnauze wird, dazu eine kleine Rute am Bogen. Daneben die Wortmarke in Fraunces.
+
+| Datei | Einsatz |
+|---|---|
+| `public/favicon.svg` | Browser-Tab, Vektor-Master |
+| `src/components/ui/Logo.tsx` (`LogoMark`) | In der App (Willkommen, Seitenleiste, Ladebildschirm) |
+| `public/icons/icon-192.png`, `icon-512.png` | PWA-Icons |
+| `public/icons/icon-maskable-512.png` | Android (mit Schutzzone für runde/abgerundete Masken) |
+| `public/icons/apple-touch-icon.png` | iOS-Startbildschirm (iOS rundet die Ecken selbst) |
+
+Markenfarben: Fläche `#687F69`, Zeichen `#FBF8EF`, Auge `#2E3A30`, Wortmarke `sage-800`.
+
 ## Farben
 
 | Rolle | Token | Wert | Einsatz |

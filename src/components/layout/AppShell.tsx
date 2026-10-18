@@ -4,7 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../lib/cn'
 import { useStore } from '../../store/AppStore'
 import { todaysPlans } from '../../store/selectors'
-import { DogPortrait, Sheet } from '../ui'
+import { DogPortrait, LogoMark, Sheet } from '../ui'
 import { DogSwitcher } from './DogSwitcher'
 
 const nav = [
@@ -140,13 +140,8 @@ function QuickAction({ icon: Icon, title, text, onClick, accent }: { icon: typeo
 export function Brand({ small }: { small?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <svg viewBox="0 0 64 64" className={small ? 'size-8' : 'size-9'} aria-hidden>
-        <rect width="64" height="64" rx="18" fill="var(--color-sage-600)" />
-        <circle cx="29" cy="36" r="11" fill="none" stroke="#F6F2EA" strokeWidth="5" />
-        <path d="M40 14v33" stroke="#F6F2EA" strokeWidth="5" strokeLinecap="round" />
-        <circle cx="47" cy="17" r="3.5" fill="var(--color-honey-400)" />
-      </svg>
-      <span className="font-display text-xl font-medium tracking-tight">Doxie Diary</span>
+      <LogoMark className={small ? 'size-8' : 'size-9'} />
+      <span className="font-display text-xl font-medium tracking-tight text-sage-800">Doxie Diary</span>
     </div>
   )
 }
