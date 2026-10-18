@@ -14,6 +14,20 @@ return [
         'cookie_path' => '/doxiediary/',       // Session-Cookie nur für die App, nicht für die ganze Domain
         'allowed_origins' => ['https://doxiewerk.de'], // Aufruf ohne www; später z. B. 'capacitor://localhost'
     ],
+    'admin' => [
+        // Admin-Zugang nur für diese (bestätigten) E-Mail-Adressen
+        'emails' => ['deine@adresse.de'],
+    ],
+    'backup' => [
+        // Verschlüsselt Backups (AES-256). Gut aufbewahren – ohne Passwort kein Wiederherstellen!
+        'password' => '',
+        // Für die automatische Abholung per Windows-Aufgabenplanung, mind. 32 Zeichen, sonst deaktiviert
+        'token' => '',
+    ],
+    'legal' => [
+        'imprint_url' => 'https://www.doxiewerk.de/impressum',
+        'privacy_url' => null,                 // Link zur Datenschutzerklärung, sobald vorhanden
+    ],
     'db' => [
         'dsn' => 'mysql:host=DB-HOST;port=3306;dbname=DB-NAME;charset=utf8mb4', // Werte aus dem STRATO-Kundenlogin
         'user' => 'DB-BENUTZER',

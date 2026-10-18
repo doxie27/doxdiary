@@ -12,6 +12,7 @@ final class Response
         public readonly string $body,
         public readonly array $headers = [],
         public readonly ?string $file = null,
+        public readonly bool $deleteFileAfterSend = false,
     ) {
     }
 
@@ -49,6 +50,17 @@ final class Response
         ], $path);
     }
 
+    /** Download einer temporären Datei, die nach dem Senden gelöscht wird. */
+    public static function download(string $path, string $filename): self
+    {
+        return new self(200, '', [
+            'Content-Type' => 'application/zip',
+            'Content-Length' => (string) filesize($path),
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-store',
+        ], $path, true);
+    }
+
     public function send(): void
     {
         http_response_code($this->status);
@@ -60,6 +72,9 @@ final class Response
         }
         if ($this->file !== null) {
             readfile($this->file);
+            if ($this->deleteFileAfterSend) {
+                @unlink($this->file);
+            }
             return;
         }
         echo $this->body;

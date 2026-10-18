@@ -5,7 +5,8 @@ import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router
 import { AppShell } from './components/layout/AppShell'
 import { ToastProvider } from './components/ui'
 import { AccountPage } from './features/account/AccountPage'
-import { LoginPage, RegisterPage, ResetConfirmPage, ResetPage, WelcomePage } from './features/auth/AuthPages'
+import { AdminPage } from './features/admin/AdminPage'
+import { LoginPage, RegisterPage, ResetConfirmPage, ResetPage, VerifyEmailPage, WelcomePage } from './features/auth/AuthPages'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { DiaryPage } from './features/diary/DiaryPage'
 import { DogProfilePage } from './features/dogs/DogProfilePage'
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
             <Route path="/reset" element={<PublicOnly><ResetPage /></PublicOnly>} />
             <Route path="/reset/confirm" element={<ResetConfirmPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
 
             <Route path="/training/session/:planId" element={<RequireAuth><RequireDog><SessionPage /></RequireDog></RequireAuth>} />
 
@@ -93,6 +95,7 @@ export default function App() {
               <Route path="dog" element={<DogProfilePage />} />
               <Route path="dogs/new" element={<NewDogPage />} />
               <Route path="account" element={<AccountPage />} />
+              <Route path="admin" element={<AdminPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

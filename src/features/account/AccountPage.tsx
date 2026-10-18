@@ -1,4 +1,5 @@
-import { ChevronRight, Download, KeyRound, LogOut, Moon, RotateCcw, Shield, Stethoscope, Trash, Users } from 'lucide-react'
+import { ChevronRight, Download, KeyRound, LogOut, Moon, RotateCcw, Shield, ShieldCheck, Stethoscope, Trash, Users } from 'lucide-react'
+import { LegalLinks } from '../../components/layout/LegalLinks'
 import { ApiError } from '../../api/client'
 import { authApi, meApi } from '../../api/endpoints'
 import { useState, type ReactNode } from 'react'
@@ -78,6 +79,12 @@ export function AccountPage() {
           <Button size="sm" variant="secondary" onClick={() => setEditName(true)}>Bearbeiten</Button>
         </Card>
 
+        {u.isAdmin && (
+          <Card className="divide-y divide-line">
+            <Row icon={<IconTile tone="bg-sage-100 text-sage-700"><ShieldCheck className="size-4" /></IconTile>} label="Administration" sub="Systemstatus, Backup, Konten" onClick={() => navigate('/admin')} />
+          </Card>
+        )}
+
         <section>
           <SectionHeader title="Deine Hunde" />
           <Card className="divide-y divide-line">
@@ -118,6 +125,7 @@ export function AccountPage() {
           <Button variant="ghost" icon={LogOut} block onClick={logout}>Abmelden</Button>
         </div>
         {live && <p className="text-center text-xs text-ink-3">Hinweis: Training und Tagebuch werden derzeit noch nur auf diesem Gerät gespeichert. Die Synchronisierung folgt mit dem nächsten Update.</p>}
+        <LegalLinks />
         <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.2' : 'Demo mit Beispieldaten'}</p>
       </div>
 

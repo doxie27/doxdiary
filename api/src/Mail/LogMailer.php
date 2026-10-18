@@ -19,7 +19,7 @@ final class LogMailer implements Mailer
         if (!is_dir($this->dir)) {
             mkdir($this->dir, 0700, true);
         }
-        $file = sprintf('%s/%s-%s.eml', $this->dir, gmdate('Ymd-His'), bin2hex(random_bytes(4)));
+        $file = sprintf('%s/%s-%06d-%s.eml', $this->dir, gmdate('Ymd-His'), (int) (fmod(microtime(true), 1) * 1e6), bin2hex(random_bytes(4)));
         file_put_contents($file, "To: {$to}\nSubject: {$subject}\n\n{$text}\n");
     }
 }

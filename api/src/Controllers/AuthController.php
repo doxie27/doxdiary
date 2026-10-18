@@ -10,8 +10,6 @@ use Doxie\Http\HttpException;
 use Doxie\Http\Request;
 use Doxie\Http\Response;
 use Doxie\Repositories\DogRepository;
-use Doxie\Repositories\UserRepository;
-use Doxie\Support\Log;
 use Doxie\Support\Validator;
 
 final class AuthController
@@ -43,7 +41,9 @@ final class AuthController
             throw new HttpException(409, 'email_taken', 'Für diese E-Mail-Adresse gibt es bereits ein Konto. Melde dich an oder setze dein Passwort zurück.', ['email' => 'Bereits registriert.']);
         }
         $id = $users->create($email, Passwords::hash($password), $firstName);
+        $this->app->mailing()->sendVerification($users->find($id));
         $this->app->session->login($id, 1);
+        $users->markLogin($id);
         return $this->sessionPayload($id, 201);
     }
 
@@ -69,6 +69,10 @@ final class AuthController
             throw new HttpException(401, 'invalid_credentials', 'E-Mail-Adresse oder Passwort ist nicht korrekt.');
         }
         $limiter->clear('login', $email);
+        if ($user['locked_at'] !== null) {
+            throw new HttpException(403, 'account_locked', 'Dieses Konto ist gesperrt. Bitte wende dich an den Support.');
+        }
+        $users->markLogin((int) $user['id']);
         if (Passwords::needsRehash((string) $user['password_hash'])) {
             $users->updatePasswordHash((int) $user['id'], Passwords::hash($password));
         }
@@ -102,13 +106,7 @@ final class AuthController
         }
         if ($user !== null && $quiet) {
             $limiter->record('reset', $email);
-            $token = $this->app->resets()->create((int) $user['id']);
-            $link = rtrim((string) $this->app->config->get('app.url'), '/') . '/reset/confirm?token=' . $token;
-            try {
-                $this->app->mailer()->send($email, 'Dein Link zum Zurücksetzen des Passworts', $this->resetMail((string) $user['first_name'], $link));
-            } catch (\Throwable $e) {
-                Log::error('mail', $e);
-            }
+            $this->app->mailing()->sendPasswordReset($user);
         }
         return Response::json(['ok' => true], 202);
     }
@@ -131,23 +129,25 @@ final class AuthController
         return Response::noContent();
     }
 
+    public function verifyEmail(Request $r): Response
+    {
+        $v = new Validator($r->body);
+        $token = $v->string('token', 20, 100);
+        $v->validate();
+        $this->app->limiter()->check('reset-confirm', $r->ip);
+        $this->app->limiter()->record('reset-confirm', $r->ip);
+        if ($this->app->verifications()->consume($token) === null) {
+            throw new HttpException(400, 'invalid_token', 'Der Bestätigungslink ist ungültig oder abgelaufen. In der App kannst du einen neuen anfordern.');
+        }
+        return Response::json(['ok' => true]);
+    }
+
     private function sessionPayload(int $userId, int $status = 200): Response
     {
-        $user = $this->app->users()->find($userId);
         return Response::json([
-            'user' => UserRepository::present($user),
+            'user' => $this->app->presentUser($userId),
             'dogs' => array_map(DogRepository::present(...), $this->app->dogs()->listForUser($userId)),
             'csrfToken' => $this->app->session->csrfToken(),
         ], $status);
-    }
-
-    private function resetMail(string $firstName, string $link): string
-    {
-        return "Hallo {$firstName},\n\n"
-            . "du hast angefordert, dein Passwort für Doxie Diary zurückzusetzen.\n"
-            . "Über diesen Link kannst du ein neues Passwort festlegen (gültig für 60 Minuten):\n\n"
-            . "{$link}\n\n"
-            . "Falls du das nicht warst, kannst du diese E-Mail ignorieren – dein Passwort bleibt unverändert.\n\n"
-            . "Dein Doxie-Diary-Team\n";
     }
 }

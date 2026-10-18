@@ -59,6 +59,27 @@ async function send(method: string, path: string, body?: Body): Promise<unknown>
   return data
 }
 
+/** Für Datei-Downloads (z. B. Backup): liefert Blob statt JSON. */
+export async function apiBlob(path: string, body: Record<string, unknown>): Promise<Blob> {
+  if (!csrfToken) await refreshCsrf()
+  let res: Response
+  try {
+    res = await fetch(API_BASE + path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken ?? '' },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    throw new ApiError(0, 'network', 'Keine Verbindung zum Server. Bitte prüfe deine Internetverbindung.')
+  }
+  if (!res.ok) {
+    const err = ((await res.json().catch(() => null)) as { error?: { code: string; message: string; fields?: Record<string, string> } } | null)?.error
+    throw new ApiError(res.status, err?.code ?? 'server_error', err?.message ?? 'Download fehlgeschlagen.', err?.fields ?? {})
+  }
+  return res.blob()
+}
+
 export async function api<T>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: Body): Promise<T> {
   if (method !== 'GET' && !csrfToken) await refreshCsrf()
   try {

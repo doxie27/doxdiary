@@ -1,9 +1,11 @@
 import { ArrowLeft, ArrowRight, CircleCheck, Eye, EyeOff, Lock, Mail, Sparkles } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { authApi } from '../../api/endpoints'
 import { Brand } from '../../components/layout/AppShell'
+import { LegalLinks } from '../../components/layout/LegalLinks'
+import { useLegal } from '../../api/useLegal'
 import { Button, TextField } from '../../components/ui'
 import { useStore } from '../../store/AppStore'
 
@@ -38,6 +40,7 @@ export function WelcomePage() {
           <button onClick={() => { dispatch({ type: 'demoLogin' }); navigate('/') }} className="mt-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-sage-600">
             <Sparkles className="size-4" /> Prototyp mit Beispieldaten ansehen
           </button>
+          <LegalLinks className="mt-2" />
         </div>
       </div>
     </div>
@@ -147,6 +150,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [consent, setConsent] = useState(false)
+  const legal = useLegal()
   const { busy, error, setError, run } = useSubmit()
   const strength = [pw.length >= 10, /[A-Z]/.test(pw) && /[a-z]/.test(pw), /\d|[^A-Za-z]/.test(pw)].filter(Boolean).length
   const submit = (e: FormEvent) => {
@@ -175,7 +179,9 @@ export function RegisterPage() {
         </div>
         <label className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4 text-sm text-ink-2">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 accent-[var(--color-sage-600)]" />
-          <span>Ich habe die Datenschutzhinweise gelesen. Meine Daten werden nur zur Bereitstellung der App verwendet – ohne Tracking oder Werbung.</span>
+          <span>
+            Ich habe die {legal.privacyUrl ? <a href={legal.privacyUrl} target="_blank" rel="noopener" className="font-semibold text-sage-600 underline underline-offset-2">Datenschutzhinweise</a> : 'Datenschutzhinweise'} gelesen. Meine Daten werden nur zur Bereitstellung der App verwendet – ohne Tracking oder Werbung.
+          </span>
         </label>
         <ErrorBox error={error} />
         <Button type="submit" size="lg" block disabled={busy}>{busy ? 'Konto wird erstellt …' : 'Konto erstellen'}</Button>
@@ -241,6 +247,50 @@ export function ResetConfirmPage() {
           <Button type="submit" size="lg" block disabled={busy}>Passwort speichern</Button>
         </form>
       )}
+    </AuthLayout>
+  )
+}
+
+/** Ziel des Bestätigungslinks: /verify-email?token=… – funktioniert mit und ohne Anmeldung. */
+export function VerifyEmailPage() {
+  const [params] = useSearchParams()
+  const token = params.get('token') ?? ''
+  const { state, dispatch } = useStore()
+  const [status, setStatus] = useState<'busy' | 'ok' | 'error'>(token ? 'busy' : 'error')
+  const [error, setError] = useState('Dieser Link ist unvollständig. Bitte öffne den Link aus der E-Mail erneut.')
+
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    authApi
+      .verifyEmail(token)
+      .then(() => !cancelled && setStatus('ok'))
+      .catch((e) => {
+        if (cancelled) return
+        setError(message(e))
+        setStatus('error')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  useEffect(() => {
+    if (status === 'ok' && state.authed && state.user.emailVerified === false) dispatch({ type: 'updateUser', user: { ...state.user, emailVerified: true } })
+  }, [status, state.authed, state.user, dispatch])
+
+  return (
+    <AuthLayout title="E-Mail bestätigen" text="Einen Moment – wir prüfen deinen Link." footer={<Link to={state.authed ? '/' : '/login'} className="font-semibold text-sage-600">{state.authed ? 'Zur App' : 'Zur Anmeldung'}</Link>}>
+      {status === 'busy' && <p className="text-ink-3">Wird bestätigt …</p>}
+      {status === 'ok' && (
+        <div className="animate-rise rounded-3xl bg-sage-50 p-6 text-center">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sage-100 text-sage-700"><CircleCheck className="size-6" /></span>
+          <h2 className="font-display mt-4 text-2xl">Danke, bestätigt!</h2>
+          <p className="mt-2 text-sm text-ink-2">Deine E-Mail-Adresse ist bestätigt. Du kannst dein Passwort jetzt jederzeit zurücksetzen.</p>
+          <Link to={state.authed ? '/' : '/login'} className="mt-5 inline-flex h-12 items-center rounded-2xl bg-sage-600 px-5 font-semibold text-white">{state.authed ? 'Weiter zur App' : 'Anmelden'}</Link>
+        </div>
+      )}
+      {status === 'error' && <ErrorBox error={error} />}
     </AuthLayout>
   )
 }

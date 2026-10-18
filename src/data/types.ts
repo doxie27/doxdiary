@@ -17,6 +17,9 @@ export interface User {
   email: string
   role: AccountRole
   createdAt: string
+  /** Nur im Live-Modus gesetzt */
+  emailVerified?: boolean
+  isAdmin?: boolean
 }
 
 /**

@@ -1,4 +1,4 @@
-import { BookHeart, Dumbbell, House, NotebookPen, Plus, Play, UserRound, Dog as DogIcon, Settings } from 'lucide-react'
+import { BookHeart, Dumbbell, House, NotebookPen, Plus, Play, ShieldCheck, UserRound, Dog as DogIcon, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../lib/cn'
@@ -6,6 +6,7 @@ import { useStore } from '../../store/AppStore'
 import { todaysPlans } from '../../store/selectors'
 import { DogPortrait, LogoMark, Sheet } from '../ui'
 import { DogSwitcher } from './DogSwitcher'
+import { VerifyBanner } from './VerifyBanner'
 
 const nav = [
   { to: '/', label: 'Heute', icon: House, end: true },
@@ -65,7 +66,12 @@ export function AppShell() {
             <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"><Play className="size-4 fill-current" /> Training starten</div>
           </button>
         )}
-        <div className="mt-auto">
+        <div className="mt-auto space-y-1">
+          {state.user.isAdmin && (
+            <NavLink to="/admin" className={({ isActive }) => cn('flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold', isActive ? 'bg-sage-100 text-sage-800' : 'text-ink-2 hover:bg-sunken')}>
+              <ShieldCheck className="size-5" /> Administration
+            </NavLink>
+          )}
           <NavLink to="/account" className={({ isActive }) => cn('flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold', isActive ? 'bg-sage-100 text-sage-800' : 'text-ink-2 hover:bg-sunken')}>
             <Settings className="size-5" /> Konto & Einstellungen
           </NavLink>
@@ -74,6 +80,7 @@ export function AppShell() {
 
       <main className="min-w-0 flex-1 pb-28 lg:pb-12">
         <div key={location.pathname} className="mx-auto w-full max-w-3xl animate-fade">
+          <VerifyBanner />
           <Outlet context={{ openSwitcher: () => setSwitcher(true) }} />
         </div>
       </main>

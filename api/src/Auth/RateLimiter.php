@@ -22,6 +22,8 @@ final class RateLimiter
         'reset-ip' => [10, 3600],
         'reset-confirm' => [20, 3600],
         'password' => [5, 900],         // Passwort ändern pro Konto
+        'verify-resend' => [3, 3600],   // Bestätigungsmail erneut senden
+        'admin-reauth' => [5, 900],     // Passwortbestätigung im Admin-Bereich
     ];
 
     /** @param array<string, array{int, int}> $overrides z. B. aus config 'limits' */

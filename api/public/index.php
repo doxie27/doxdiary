@@ -31,4 +31,10 @@ if (!function_exists('doxie_config')) {
     exit;
 }
 
-(new Doxie\App(doxie_config()))->handle()->send();
+$app = new Doxie\App(doxie_config());
+$app->handle()->send();
+// Antwort sofort ausliefern, danach ggf. Wartung (STRATO hat keine Cronjobs)
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+}
+$app->afterResponse();

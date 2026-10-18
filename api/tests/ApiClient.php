@@ -10,6 +10,8 @@ final class ApiClient
     private \CurlHandle $curl;
     public ?string $csrf = null;
     public ?string $origin = null;
+    /** @var list<string> */
+    private array $extra = [];
 
     public function __construct()
     {
@@ -22,6 +24,17 @@ final class ApiClient
     public function get(string $path): ApiResponse
     {
         return $this->request('GET', $path);
+    }
+
+    /** GET mit zusätzlichem Header (z. B. Authorization) */
+    public function getWithHeader(string $path, string $header): ApiResponse
+    {
+        $this->extra = [$header];
+        try {
+            return $this->request('GET', $path);
+        } finally {
+            $this->extra = [];
+        }
     }
 
     public function post(string $path, array $body = []): ApiResponse
@@ -79,7 +92,7 @@ final class ApiClient
 
     private function request(string $method, string $path, ?array $json = null, ?array $multipart = null): ApiResponse
     {
-        $headers = [];
+        $headers = $this->extra;
         if ($this->csrf !== null && $method !== 'GET') {
             $headers[] = 'X-CSRF-Token: ' . $this->csrf;
         }

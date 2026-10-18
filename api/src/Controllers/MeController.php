@@ -11,6 +11,7 @@ use Doxie\Http\Request;
 use Doxie\Http\Response;
 use Doxie\Repositories\DogRepository;
 use Doxie\Repositories\UserRepository;
+use Doxie\Services\AccountDeleter;
 use Doxie\Support\Validator;
 
 final class MeController
@@ -23,7 +24,7 @@ final class MeController
     {
         $id = $this->app->userId();
         return Response::json([
-            'user' => UserRepository::present($this->app->users()->find($id)),
+            'user' => $this->app->presentUser($id),
             'dogs' => array_map(DogRepository::present(...), $this->app->dogs()->listForUser($id)),
             'csrfToken' => $this->app->session->csrfToken(),
         ]);
@@ -38,7 +39,7 @@ final class MeController
         $last = $v->has('lastName') ? $v->string('lastName', 0, 60) : (string) $user['last_name'];
         $v->validate();
         $this->app->users()->updateProfile($id, $first, $last);
-        return Response::json(['user' => UserRepository::present($this->app->users()->find($id))]);
+        return Response::json(['user' => $this->app->presentUser($id)]);
     }
 
     public function changePassword(Request $r): Response
@@ -89,18 +90,21 @@ final class MeController
         if (!Passwords::verify($password, (string) $user['password_hash'])) {
             throw HttpException::validation(['password' => 'Das Passwort ist nicht korrekt.']);
         }
-        $images = $this->app->images();
-        $keys = $this->app->media()->keysForOwner($id);
-        $this->app->db()->transaction(function () use ($id): void {
-            foreach ($this->app->dogs()->soleOwnedDogIds($id) as $dogId) {
-                $this->app->dogs()->delete($dogId);
-            }
-            $this->app->users()->delete($id);
-        });
-        foreach ($keys as $key) {
-            $images->delete($key);
-        }
+        (new AccountDeleter($this->app))->delete($id);
         $this->app->session->logout();
         return Response::noContent();
+    }
+
+    public function resendVerification(Request $r): Response
+    {
+        $id = $this->app->userId();
+        $user = $this->app->users()->find($id);
+        if ($user['email_verified_at'] !== null) {
+            return Response::json(['ok' => true, 'alreadyVerified' => true]);
+        }
+        $this->app->limiter()->check('verify-resend', (string) $id);
+        $this->app->limiter()->record('verify-resend', (string) $id);
+        $this->app->mailing()->sendVerification($user);
+        return Response::json(['ok' => true]);
     }
 }

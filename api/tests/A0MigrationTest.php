@@ -15,11 +15,13 @@ final class A0MigrationTest extends TestCase
         self::assertSame(['ok' => true, 'db' => true], $res->json);
 
         $db = Db::fromConfig(doxie_config());
-        self::assertSame(['0001_init'], array_column($db->all('SELECT version FROM schema_migrations'), 'version'));
-        self::assertSame('0001_init', trim((string) file_get_contents(doxie_config()->storagePath('schema.version'))));
+        $expected = array_map(static fn ($f) => basename($f, '.sql'), glob(dirname(__DIR__) . '/migrations/*.sql'));
+        sort($expected);
+        self::assertSame($expected, array_column($db->all('SELECT version FROM schema_migrations ORDER BY version'), 'version'));
+        self::assertSame(end($expected), trim((string) file_get_contents(doxie_config()->storagePath('schema.version'))));
 
         // Zweiter Aufruf: nichts passiert, keine doppelten Einträge
         (new ApiClient())->get('/health');
-        self::assertCount(1, $db->all('SELECT version FROM schema_migrations'));
+        self::assertCount(count($expected), $db->all('SELECT version FROM schema_migrations'));
     }
 }

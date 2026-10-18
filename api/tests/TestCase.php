@@ -22,6 +22,20 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         return $res->json['dog'];
     }
 
+    /** Bestätigt die E-Mail eines Kontos über den echten Link aus der Mail. */
+    protected static function verify(ApiClient $c, string $email): void
+    {
+        preg_match('/verify-email\?token=([A-Za-z0-9_-]+)/', (string) self::lastMailTo($email), $m);
+        \PHPUnit\Framework\Assert::assertNotEmpty($m, 'Bestätigungsmail fehlt');
+        \PHPUnit\Framework\Assert::assertSame(200, $c->post('/auth/email/verify', ['token' => $m[1]])->status);
+    }
+
+    /** In-Process-App mit Testkonfiguration (für Wartung u. Ä.). */
+    protected static function app(): \Doxie\App
+    {
+        return new \Doxie\App(doxie_config());
+    }
+
     protected static function mailDir(): string
     {
         return doxie_config()->storagePath('mail');

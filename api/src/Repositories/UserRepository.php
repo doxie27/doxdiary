@@ -52,13 +52,37 @@ final class UserRepository
         );
     }
 
+    public function markLogin(int $id): void
+    {
+        $this->db->run('UPDATE users SET last_login_at = ? WHERE id = ?', [Db::now(), $id]);
+    }
+
+    /** Sperren beendet zugleich alle Sitzungen (session_version). */
+    public function setLocked(int $id, bool $locked): void
+    {
+        $this->db->run(
+            'UPDATE users SET locked_at = ?, session_version = session_version + ?, updated_at = ? WHERE id = ?',
+            [$locked ? Db::now() : null, $locked ? 1 : 0, Db::now(), $id],
+        );
+    }
+
+    /** Kontoliste für den Admin-Bereich – bewusst ohne Hunde- oder Gesundheitsdaten. */
+    public function adminList(): array
+    {
+        return $this->db->all(
+            "SELECT u.id, u.first_name, u.last_name, u.email, u.created_at, u.last_login_at, u.email_verified_at, u.locked_at,
+                    (SELECT COUNT(*) FROM dog_members m WHERE m.user_id = u.id AND m.role = 'owner') AS dogs
+             FROM users u ORDER BY u.created_at DESC LIMIT 1000",
+        );
+    }
+
     public function delete(int $id): void
     {
         $this->db->run('DELETE FROM users WHERE id = ?', [$id]);
     }
 
     /** @param array<string, mixed> $u */
-    public static function present(array $u): array
+    public static function present(array $u, bool $isAdmin = false): array
     {
         return [
             'id' => (string) $u['id'],
@@ -66,6 +90,8 @@ final class UserRepository
             'lastName' => $u['last_name'],
             'email' => $u['email'],
             'role' => $u['role'],
+            'emailVerified' => $u['email_verified_at'] !== null,
+            'isAdmin' => $isAdmin,
             'createdAt' => self::iso($u['created_at']),
         ];
     }
