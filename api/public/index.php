@@ -5,15 +5,20 @@ declare(strict_types=1);
 /**
  * Einziger öffentlicher PHP-Einstieg der API.
  * Entwicklung:  App liegt unter ../src
- * STRATO:       App liegt unter <home>/doxie-private/app/src (siehe docs/05-deployment.md)
+ * STRATO:       App liegt in doxie-private/app außerhalb des Webroots (siehe docs/05-deployment.md)
  */
 
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
-$appDir = getenv('DOXIE_APP_DIR') ?: null;
-foreach (array_filter([$appDir, dirname(__DIR__), dirname(__DIR__, 2) . '/doxie-private/app']) as $dir) {
+// App-Code suchen: Umgebungsvariable, Repo-Layout (Entwicklung) oder ein Ordner
+// doxie-private/app in einem der übergeordneten Verzeichnisse (STRATO).
+$candidates = array_filter([getenv('DOXIE_APP_DIR') ?: null, dirname(__DIR__)]);
+for ($level = 2; $level <= 5; $level++) {
+    $candidates[] = dirname(__DIR__, $level) . '/doxie-private/app';
+}
+foreach ($candidates as $dir) {
     if (is_file($dir . '/src/bootstrap.php')) {
         require $dir . '/src/bootstrap.php';
         break;

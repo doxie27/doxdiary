@@ -1,6 +1,8 @@
-# Doxie Diary – .htaccess für doxie-public/ (Webroot der Domain)
+# Doxie Diary – .htaccess für den öffentlichen App-Ordner (z. B. /doxiediary/)
+# RewriteBase wird von scripts/build-release.mjs gesetzt.
 Options -Indexes -MultiViews
 RewriteEngine On
+RewriteBase /
 
 # Immer HTTPS
 RewriteCond %{HTTPS} !=on

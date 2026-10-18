@@ -10,14 +10,14 @@
 return [
     'app' => [
         'env' => 'production',                 // 'development' zeigt Fehlermeldungen (ohne personenbezogene Daten)
-        'url' => 'https://deine-domain.de',    // Basis-URL der App (für Links in E-Mails, Origin-Prüfung)
+        'url' => 'https://www.doxiewerk.de/doxiediary', // Basis-URL der App (Links in E-Mails, Origin-Prüfung)
         'secret' => 'HIER-64-ZEICHEN-HEX',     // für HMAC (Rate-Limiting) – geheim halten
         'secure_cookies' => true,              // lokal ohne HTTPS: false
-        'cookie_path' => '/',
-        'allowed_origins' => [],               // später z. B. 'capacitor://localhost'
+        'cookie_path' => '/doxiediary/',       // Session-Cookie nur für die App, nicht für die ganze Domain
+        'allowed_origins' => ['https://doxiewerk.de'], // Aufruf ohne www; später z. B. 'capacitor://localhost'
     ],
     'db' => [
-        'dsn' => 'mysql:host=DB-HOST;port=3306;dbname=DB-NAME;charset=utf8mb4',
+        'dsn' => 'mysql:host=DB-HOST;port=3306;dbname=DB-NAME;charset=utf8mb4', // Werte aus dem STRATO-Kundenlogin
         'user' => 'DB-BENUTZER',
         'pass' => 'DB-PASSWORT',
     ],
@@ -29,9 +29,9 @@ return [
         'host' => 'smtp.strato.de',
         'port' => 465,
         'encryption' => 'ssl',                 // ssl (465) oder tls (587, STARTTLS)
-        'user' => 'noreply@deine-domain.de',
+        'user' => 'noreply@doxiewerk.de',
         'pass' => 'POSTFACH-PASSWORT',
-        'from' => 'noreply@deine-domain.de',
+        'from' => 'noreply@doxiewerk.de',
         'from_name' => 'Doxie Diary',
     ],
 ];
