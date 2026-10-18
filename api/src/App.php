@@ -25,6 +25,7 @@ use Doxie\Repositories\UserRepository;
 use Doxie\Support\Config;
 use Doxie\Support\Db;
 use Doxie\Support\Log;
+use Doxie\Support\Migrator;
 
 /**
  * Anwendungskern: verdrahtet Dienste, Routen und den Ablauf jeder Anfrage
@@ -111,6 +112,14 @@ final class App
     {
         $requestId = bin2hex(random_bytes(6));
         try {
+            if ($this->config->get('app.auto_migrate', true)) {
+                try {
+                    Migrator::ensureCurrent($this->config, $this->db(...));
+                } catch (\Throwable $e) {
+                    // z. B. falsches DB-Passwort: protokollieren, /health meldet dann "db": false
+                    Log::error($requestId, $e);
+                }
+            }
             $request = Request::fromGlobals();
             [$handler, $needsAuth] = $this->routes()->match($request);
 

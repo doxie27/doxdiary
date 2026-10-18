@@ -41,11 +41,7 @@ Die genaue Lage des Webroots wird nach dem ersten SFTP-Login festgelegt. Die üb
    - `app.secret` leer lassen – der Server erzeugt ihn beim ersten Aufruf in `storage/secret.key`
    - `db.*` = Werte aus Schritt 2
    - `mail.*` = `noreply@doxiewerk.de` (`smtp.strato.de`, Port 465, `ssl`)
-7. **Datenbank-Schema anlegen** (per SSH):
-   ```bash
-   ssh su396778@5021038204.ssh.w2.strato.hosting
-   php doxie-private/app/bin/migrate.php
-   ```
+7. **Datenbank-Schema:** Es ist nichts zu tun. Der Benutzer `su396778` darf nur SFTP, keine Kommandozeile. Die App legt die Tabellen deshalb beim ersten Aufruf selbst an (`Support\Migrator`, gesteuert über `storage/schema.version` und eine Dateisperre).
 8. **Domain:** keine Änderung nötig, die App liegt als Unterordner in der bestehenden Website.
 9. **Prüfen:**
    - `https://www.doxiewerk.de/doxiediary/api/v1/health` → `{"ok":true,"db":true}` (bei `"db":false`: DB-Zugang in config.php oder Migration prüfen)
@@ -59,42 +55,24 @@ Die genaue Lage des Webroots wird nach dem ersten SFTP-Login festgelegt. Die üb
 npm run release
 ```
 Dann per SFTP **ersetzen**: `doxiediary/` komplett und `doxie-private/app/` komplett.
-`config.php` und `storage/` **nicht** überschreiben. Danach per SSH:
-```bash
-php doxie-private/app/bin/migrate.php
-```
+`config.php` und `storage/` **nicht** überschreiben. Neue Migrationen werden beim nächsten Aufruf der App automatisch eingespielt. Danach `…/api/v1/health` aufrufen und prüfen.
 
-## Backups (ohne Cronjobs)
+## Backups (ohne Cronjobs und ohne Kommandozeile)
 
-Das STRATO-Paket bietet keine Cronjobs. Deshalb wird das Backup von deinem Windows-PC aus angestoßen. Zusätzlich gibt es STRATOs eigene Datensicherung.
+Dein STRATO-Zugang erlaubt nur SFTP. Weder Cronjobs noch SSH-Befehle sind möglich. Deshalb:
 
-**Manuell** (jederzeit):
-```bash
-ssh su396778@5021038204.ssh.w2.strato.hosting "php doxie-private/app/bin/backup.php"
-```
-Legt `storage/backups/db-<datum>.sql.gz` und `uploads-<datum>.tar.gz` an und behält jeweils die 14 neuesten.
+1. **Ab sofort:** die STRATO-eigene Datensicherung des Webspace und der Datenbank (Kundenlogin → Sicherungen). Dort lässt sich ein älterer Stand wiederherstellen.
+2. **Uploads sichern:** regelmäßig den Ordner `doxie-private/storage/uploads/` per SFTP herunterladen und auf dem eigenen Rechner verschlüsselt ablegen (z. B. BitLocker).
+3. **Geplant für Phase 4:** ein geschützter Backup-Download (Datenbank-Dump + Uploads als Archiv), nur mit eigenem Schlüssel aufrufbar. Damit kann die Windows-Aufgabenplanung täglich automatisch eine Kopie abholen.
 
-**Automatisch über die Windows-Aufgabenplanung:**
-1. Einmalig einen SSH-Schlüssel einrichten: `ssh-keygen -t ed25519` und den öffentlichen Schlüssel auf dem Server in `~/.ssh/authorized_keys` eintragen. Prüfen, ob die Anmeldung danach ohne Passwort klappt.
-2. Aufgabenplanung → Einfache Aufgabe erstellen → täglich, z. B. 21:00 Uhr
-   - Programm: `C:\Windows\System32\OpenSSH\ssh.exe`
-   - Argumente: `su396778@5021038204.ssh.w2.strato.hosting "php doxie-private/app/bin/backup.php"`
-   - Option „Aufgabe so schnell wie möglich nach einem verpassten Start ausführen“ aktivieren
-3. **Kopie nach Hause** (wöchentlich empfohlen): `scp su396778@5021038204.ssh.w2.strato.hosting:doxie-private/storage/backups/* D:\Backups\doxie\`. Den Ordner verschlüsselt speichern, z. B. mit BitLocker, denn er enthält personenbezogene Daten.
+`bin/backup.php` bleibt für Umgebungen mit Kommandozeile erhalten.
 
 ## Wiederherstellung
 
-1. Wartungsfenster: Domain-Ziel vorübergehend auf eine Hinweisseite setzen (optional).
-2. Datenbank:
-   ```bash
-   gunzip -c doxie-private/storage/backups/db-<datum>.sql.gz | mysql -h <db-host> -u <db-user> -p <db-name>
-   ```
-3. Uploads:
-   ```bash
-   tar -xzf doxie-private/storage/backups/uploads-<datum>.tar.gz -C doxie-private/storage/uploads
-   ```
-4. `php doxie-private/app/bin/migrate.php --status` prüfen.
-5. **Probelauf einmal pro Quartal** in eine zweite Datenbank (Test-DB) einspielen und `config.php` einer Testkopie darauf zeigen lassen.
+1. Datenbank über die STRATO-Sicherung oder phpMyAdmin (Kundenlogin → Datenbanken) wiederherstellen.
+2. Uploads per SFTP zurück nach `doxie-private/storage/uploads/` kopieren.
+3. `…/api/v1/health` prüfen.
+4. Probelauf einmal pro Quartal mit einer zweiten Datenbank (Test-DB) durchführen.
 
 ## Sicherheits-Checkliste nach jedem Deployment
 
@@ -102,3 +80,4 @@ Legt `storage/backups/db-<datum>.sql.gz` und `uploads-<datum>.tar.gz` an und beh
 - [ ] `app.env` = `production`, `secure_cookies` = `true`, `mail.driver` = `smtp`
 - [ ] `https://www.doxiewerk.de/doxiediary/api/v1/gibt-es-nicht` liefert JSON-404 ohne technische Details
 - [ ] Prüf-Skripte (`strato-check.php`, `rewrite-test/`) sind gelöscht
+- [ ] `…/api/v1/health` liefert `{"ok":true,"db":true}`

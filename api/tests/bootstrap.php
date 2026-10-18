@@ -21,10 +21,7 @@ foreach ($db->all('SHOW TABLES') as $row) {
 }
 $db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 1');
 exec('rm -rf ' . escapeshellarg($cfg->storagePath()));
-passthru(PHP_BINARY . ' ' . escapeshellarg(dirname(__DIR__) . '/bin/migrate.php') . ' > /dev/null', $code);
-if ($code !== 0) {
-    throw new RuntimeException('Migration fehlgeschlagen');
-}
+// Schema wird – wie auf STRATO – automatisch beim ersten Aufruf angelegt (siehe MigrationTest)
 
 $port = 18000 + random_int(0, 999);
 define('DOXIE_TEST_BASE', "http://127.0.0.1:{$port}/api/v1");
