@@ -67,6 +67,16 @@ Läuft unter https://www.doxiewerk.de/doxiediary/: Health-Check grün (App + Dat
 | Tests: 48 PHPUnit, 14 Vitest, E2E-Skript `e2e/live-flow.mjs` (12 Schritte) | ✅ |
 | Windows-Skript für automatischen Backup-Abruf, Wiederherstellungsanleitung | ✅ |
 
+## Idee: Rückblick & Erinnerungsbuch (Vorschlag, noch nicht freigegeben)
+
+Wunsch: Tagebuch wöchentlich, monatlich oder jährlich zusammenfassen und schön aufbereitet als PDF bzw. eigenes „Tagebuch“ erstellen.
+
+- **Rückblick in der App:** Zeitraum (Woche, Monat, Jahr, frei), Hund und Kategorien wählen; Titelseite mit Foto, Kennzahlen, Highlights, Zeitleiste und Fotocollage, dazu Trainingsaktivität (nur Aktivität, keine Gesundheitsaussagen)
+- **Highlights:** Einträge mit ★ markieren, damit sie im Rückblick hervorgehoben werden
+- **PDF-Export:** auf dem Gerät erzeugt (pdf-lib, eigene Schriften), ohne zusätzliche Server-Last; Formate Rückblick (kompakt) und Erinnerungsbuch (ganzes Jahr, A4/A5)
+- **Variante „Für Tierarzt/Physio“:** nur Gesundheit, Training und Beobachtungen, sachlich, zum Mitnehmen oder Weitergeben
+- **Später, optional und nur mit Einwilligung:** KI-Zusammenfassung in Worten (Datenschutz prüfen)
+
 ## Nächste Ideen
 
 1. P2 Dark Mode (Tokens sind vorbereitet)
