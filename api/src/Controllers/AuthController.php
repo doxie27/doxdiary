@@ -32,7 +32,7 @@ final class AuthController
         $firstName = $v->string('firstName', 1, 60);
         $email = $v->email('email');
         $password = $v->password('password');
-        $v->accepted('privacyAccepted', 'Bitte bestätige die Datenschutzhinweise.');
+        $v->accepted('privacyAccepted', 'Bitte bestätige dein Alter und die Datenschutzhinweise.');
         $v->validate();
 
         $limiter->record('register', $r->ip);

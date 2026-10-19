@@ -25,8 +25,9 @@ return [
         'token' => '',
     ],
     'legal' => [
-        'imprint_url' => 'https://www.doxiewerk.de/impressum',
-        'privacy_url' => null,                 // Link zur Datenschutzerklärung, sobald vorhanden
+        // null = mitgelieferte Seiten der App (impressum.html, datenschutz.html)
+        'imprint_url' => null,
+        'privacy_url' => null,
     ],
     'db' => [
         'dsn' => 'mysql:host=DB-HOST;port=3306;dbname=DB-NAME;charset=utf8mb4', // Werte aus dem STRATO-Kundenlogin

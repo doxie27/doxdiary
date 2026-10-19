@@ -133,7 +133,7 @@ export function AccountPage() {
           <Button variant="ghost" icon={LogOut} block onClick={logout}>Abmelden</Button>
         </div>
         <LegalLinks />
-        <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.3' : 'Demo mit Beispieldaten'}</p>
+        <p className="text-center text-xs text-ink-3">Doxie Diary · {live ? 'Version 0.4' : 'Demo mit Beispieldaten'}</p>
       </div>
 
       <InstallSheet open={install} onClose={() => setInstall(false)} />

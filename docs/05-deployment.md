@@ -70,8 +70,8 @@ In `doxie-private/config.php` kommen drei Abschnitte dazu (Vorlage: `config.exam
     'token' => '',                                    // optional: für automatischen Abruf, mind. 32 Zeichen
 ],
 'legal' => [
-    'imprint_url' => 'https://www.doxiewerk.de/impressum',
-    'privacy_url' => null,                            // sobald eine Datenschutzerklärung online ist
+    'imprint_url' => null,                            // null = mitgelieferte Seite impressum.html
+    'privacy_url' => null,                            // null = mitgelieferte Seite datenschutz.html
 ],
 ```
 

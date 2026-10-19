@@ -52,7 +52,8 @@ Läuft unter https://www.doxiewerk.de/doxiediary/: Health-Check grün (App + Dat
 | Backup: AES-256-verschlüsseltes ZIP (SQL-Dump in PHP + Fotos), per App oder per Token automatisch | ✅ |
 | Physiotherapie auf dem Server: Übungen (inkl. Foto, Startvorlagen), Pläne (Reihenfolge, Werte, Tage, Archiv), Einheiten (Snapshots, idempotent) | ✅ |
 | Offline-Warteschlange für Trainingseinheiten, Wake Lock, Signalton | ✅ |
-| Impressum/Datenschutz-Links aus der Konfiguration | ✅ (Datenschutzerklärung selbst: offen, rechtliche Prüfung) |
+| Impressum/Datenschutz-Links aus der Konfiguration | ✅ |
+| Impressum und Datenschutzerklärung als Seiten der App (`public/impressum.html`, `public/datenschutz.html`), Altersbestätigung ab 16, Fehlerprotokolle nach 90 Tagen löschen | ✅ (rechtliche Prüfung extern empfohlen) |
 
 ## Phase 4 – Tagebuch, PWA, Qualität ✅
 
@@ -81,7 +82,7 @@ Läuft unter https://www.doxiewerk.de/doxiediary/: Health-Check grün (App + Dat
 ## Nächste Ideen
 
 1. P2 Dark Mode (Tokens sind vorbereitet)
-2. P2 Datenschutzerklärung für die App fertigstellen (Verarbeitungsübersicht liefere ich, rechtliche Prüfung extern)
+2. P2 Datenschutzerklärung extern prüfen lassen; bei neuen Funktionen (z. B. Teilen mit Therapeut:innen) anpassen
 3. P2 E-Mail-Adresse ändern (mit Bestätigung der neuen Adresse)
 4. P3 Erinnerungen (Web Push) an geplante Trainings
 5. P3 Zwei-Faktor-Anmeldung für das Admin-Konto

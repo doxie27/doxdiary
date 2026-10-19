@@ -1,0 +1,34 @@
+/* Doxie Diary – Rechtstexte (eigenständig, ohne App-Bundle) */
+@font-face { font-family: 'Fraunces'; src: url('fraunces.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Jakarta'; src: url('jakarta.woff2') format('woff2'); font-weight: 200 800; font-display: swap; }
+
+:root {
+  --canvas: #f6f2ea; --surface: #fffdf9; --line: #e7e0d3;
+  --ink: #1e2420; --ink-2: #4a514b; --ink-3: #7b8079;
+  --sage: #4e6b57; --sage-50: #f1f4ef;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--canvas); color: var(--ink-2);
+  font: 16px/1.65 'Jakarta', ui-sans-serif, system-ui, sans-serif;
+}
+main { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.brand { display: flex; align-items: center; gap: .6rem; color: var(--ink); text-decoration: none; font: 500 1.15rem 'Fraunces', Georgia, serif; }
+.brand img { width: 2rem; height: 2rem; }
+h1 { margin: 2.25rem 0 .25rem; color: var(--ink); font: 500 clamp(1.8rem, 8vw, 2.4rem)/1.1 'Fraunces', Georgia, serif; letter-spacing: -.01em; overflow-wrap: anywhere; hyphens: auto; }
+.stand { margin: 0 0 2rem; color: var(--ink-3); font-size: .875rem; }
+h2 { margin: 2.5rem 0 .5rem; color: var(--ink); font: 500 1.35rem/1.25 'Fraunces', Georgia, serif; }
+h3 { margin: 1.5rem 0 .25rem; color: var(--ink); font-size: 1rem; font-weight: 650; }
+p, ul { margin: 0 0 .9rem; }
+ul { padding-left: 1.2rem; }
+li { margin-bottom: .3rem; }
+a { color: var(--sage); font-weight: 600; text-underline-offset: 2px; }
+strong { color: var(--ink); font-weight: 650; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 1.25rem; padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
+.card p:last-child { margin-bottom: 0; }
+.note { background: var(--sage-50); border-color: #c9d6c3; }
+address { font-style: normal; }
+footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 1rem; font-size: .875rem; }
+@media print { body { background: #fff; } .card { border-color: #ccc; } footer { display: none; } }

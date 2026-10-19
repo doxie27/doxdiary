@@ -37,9 +37,12 @@ export function WelcomePage() {
         <div className="grid grid-cols-1 gap-2.5">
           <Button size="lg" block iconRight={ArrowRight} onClick={() => navigate('/register')}>Kostenlos starten</Button>
           <Button size="lg" variant="secondary" block onClick={() => navigate('/login')}>Ich habe schon ein Konto</Button>
-          <button onClick={() => { dispatch({ type: 'demoLogin' }); navigate('/') }} className="mt-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-sage-600">
-            <Sparkles className="size-4" /> Prototyp mit Beispieldaten ansehen
-          </button>
+          {/* Demo mit Beispieldaten nur in der Vorschau-Version (npm run build:preview), nicht live */}
+          {import.meta.env.MODE === 'showcase' && (
+            <button onClick={() => { dispatch({ type: 'demoLogin' }); navigate('/') }} className="mt-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-sage-600">
+              <Sparkles className="size-4" /> Prototyp mit Beispieldaten ansehen
+            </button>
+          )}
           <LegalLinks className="mt-2" />
         </div>
       </div>
@@ -180,7 +183,7 @@ export function RegisterPage() {
         <label className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4 text-sm text-ink-2">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-5 accent-[var(--color-sage-600)]" />
           <span>
-            Ich habe die {legal.privacyUrl ? <a href={legal.privacyUrl} target="_blank" rel="noopener" className="font-semibold text-sage-600 underline underline-offset-2">Datenschutzhinweise</a> : 'Datenschutzhinweise'} gelesen. Meine Daten werden nur zur Bereitstellung der App verwendet – ohne Tracking oder Werbung.
+            Ich bin mindestens 16 Jahre alt und habe die {legal.privacyUrl ? <a href={legal.privacyUrl} target="_blank" rel="noopener" className="font-semibold text-sage-600 underline underline-offset-2">Datenschutzhinweise</a> : 'Datenschutzhinweise'} gelesen. Meine Daten werden nur zur Bereitstellung der App verwendet – ohne Tracking oder Werbung.
           </span>
         </label>
         <ErrorBox error={error} />

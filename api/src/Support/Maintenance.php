@@ -16,6 +16,7 @@ final class Maintenance
     private const INTERVAL = 3600;
     private const VERIFY_DAYS = 7;
     private const REMIND_AFTER_DAYS = 5;
+    private const LOG_DAYS = 90;
 
     public function __construct(private readonly App $app)
     {
@@ -71,6 +72,13 @@ final class Maintenance
             $deleter->delete((int) $row['id']);
             $db->run("INSERT INTO admin_audit (admin_user_id, action, target_user_id, created_at) VALUES (NULL, 'auto_delete_unverified', ?, ?)", [$row['id'], Db::now()]);
             $result['deleted']++;
+        }
+
+        // Fehlerprotokolle nach 90 Tagen löschen (so in der Datenschutzerklärung zugesagt)
+        foreach (glob($this->app->config->storagePath('logs') . '/app-*.log') ?: [] as $file) {
+            if (is_file($file) && filemtime($file) < time() - self::LOG_DAYS * 86400) {
+                @unlink($file);
+            }
         }
 
         // Temporäre Backup-Dateien, die nicht ausgeliefert wurden
