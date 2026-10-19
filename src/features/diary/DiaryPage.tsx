@@ -1,4 +1,5 @@
-import { ImagePlus, NotebookPen, Plus, Trash, X } from 'lucide-react'
+import { BookOpen, ImagePlus, NotebookPen, Plus, Star, Trash, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/layout/PageHeader'
@@ -14,6 +15,9 @@ import { useStore } from '../../store/AppStore'
 
 export function DiaryPage() {
   const { state, dog } = useStore()
+  const navigate = useNavigate()
+  const toast = useToast()
+  const { saveEntry } = useLiveActions()
   const [params, setParams] = useSearchParams()
   const [filter, setFilter] = useState<DiaryCategory | null>(null)
   const [editing, setEditing] = useState<DiaryEntry | null>(null)
@@ -34,7 +38,12 @@ export function DiaryPage() {
 
   return (
     <div>
-      <PageHeader title="Tagebuch" eyebrow={`Momente mit ${dog.name}`} actions={<Button size="sm" variant="soft" icon={Plus} onClick={() => setEditing(newEntry(dog.id))}>Eintrag</Button>} />
+      <PageHeader title="Tagebuch" eyebrow={`Momente mit ${dog.name}`} actions={
+          <>
+            <Button size="sm" variant="secondary" icon={BookOpen} onClick={() => navigate('/review')}>Rückblick</Button>
+            <Button size="sm" variant="soft" icon={Plus} onClick={() => setEditing(newEntry(dog.id))}>Eintrag</Button>
+          </>
+        } />
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-5 lg:px-8">
         <Filter active={!filter} onClick={() => setFilter(null)}>Alle</Filter>
         {(Object.keys(diaryCategories) as DiaryCategory[]).map((c) => {
@@ -59,8 +68,9 @@ export function DiaryPage() {
                   {entries.map((e) => {
                     const m = diaryCategories[e.category]
                     return (
-                      <button key={e.id} onClick={() => setEditing(e)} className="text-left">
-                        <Card className="p-4 transition hover:border-line-strong active:scale-[0.99]">
+                      <div key={e.id} className="relative">
+                      <button onClick={() => setEditing(e)} className="block w-full text-left">
+                        <Card className="p-4 pr-14 transition hover:border-line-strong active:scale-[0.99]">
                           <div className="flex items-center gap-2">
                             <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold', m.tint)}><m.icon className="size-3.5" />{m.label}</span>
                             <span className="text-xs font-medium text-ink-3">{fmt.time(e.at)} Uhr</span>
@@ -74,6 +84,15 @@ export function DiaryPage() {
                           )}
                         </Card>
                       </button>
+                      <button
+                        aria-label={e.highlight ? 'Highlight entfernen' : 'Als Highlight markieren'}
+                        aria-pressed={!!e.highlight}
+                        onClick={() => saveEntry({ ...e, highlight: !e.highlight }, [], []).then(() => toast(e.highlight ? 'Highlight entfernt' : 'Als Highlight markiert')).catch((err: Error) => toast(err.message))}
+                        className="absolute right-2 top-2 flex size-11 items-center justify-center rounded-full transition active:scale-90"
+                      >
+                        <Star className={cn('size-5 transition', e.highlight ? 'fill-honey-400 text-honey-400' : 'text-line-strong')} />
+                      </button>
+                      </div>
                     )
                   })}
                 </div>
@@ -153,6 +172,10 @@ function EntrySheet({ entry, onClose }: { entry: DiaryEntry; onClose: () => void
             return { value: c, label: m.label, icon: <m.icon className="size-4" /> }
           })}
         />
+        <button type="button" aria-pressed={!!e.highlight} onClick={() => set('highlight', !e.highlight)} className={cn('flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition', e.highlight ? 'border-honey-400 bg-honey-100/60 text-ink' : 'border-line bg-surface text-ink-2')}>
+          <Star className={cn('size-5', e.highlight ? 'fill-honey-400 text-honey-400' : 'text-ink-3')} />
+          <span className="flex-1">Highlight – im Rückblick hervorheben</span>
+        </button>
         <TextField label="Titel" value={e.title} onChange={(x) => set('title', x.target.value)} placeholder="Was ist passiert?" maxLength={80} />
         <TextArea label="Notiz" value={e.text} onChange={(x) => set('text', x.target.value)} rows={4} maxLength={2000} placeholder="Erzähl ein bisschen …" />
         <TextField label="Datum & Uhrzeit" type="datetime-local" value={toLocalInput(e.at)} onChange={(x) => x.target.value && set('at', new Date(x.target.value).toISOString())} />

@@ -1,4 +1,4 @@
-import { Cake, ChevronLeft, Dumbbell, Lock, Mars, NotebookPen, Pencil, Scale, ShieldCheck, Sparkles, Trash, Venus } from 'lucide-react'
+import { Cake, ChevronLeft, Dumbbell, Lock, Mars, NotebookPen, Pencil, Scale, ShieldCheck, Sparkles, Stethoscope, Trash, Venus } from 'lucide-react'
 import { ApiError } from '../../api/client'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -113,6 +113,13 @@ export function DogProfilePage() {
               Profil und Gesundheitsdaten sind privat. Freigaben für Familie oder Physiotherapeut:innen folgen in einer späteren Version – immer nur mit deiner ausdrücklichen Zustimmung.
             </p>
           </Card>
+          <Link to="/review?mode=vet" className="mt-3 flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 transition hover:border-line-strong">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600"><Stethoscope className="size-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">Bericht für Tierarzt/Physio</span>
+              <span className="block text-sm text-ink-3">Gesundheit, Training und Beobachtungen als PDF</span>
+            </span>
+          </Link>
           <Link to="/diary?new=1" className="mt-3 flex items-center justify-center gap-2 py-3 text-sm font-semibold text-sage-600">
             <NotebookPen className="size-4" /> Moment mit {dog.name} festhalten
           </Link>

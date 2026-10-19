@@ -38,8 +38,8 @@ final class DiaryRepository
     {
         $now = Db::now();
         return $this->db->insert(
-            'INSERT INTO diary_entries (dog_id, user_id, client_id, occurred_at, category, title, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [$dogId, $userId, $clientId, $f['occurred_at'], $f['category'], $f['title'], $f['text'], $now, $now],
+            'INSERT INTO diary_entries (dog_id, user_id, client_id, occurred_at, category, title, text, highlight, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [$dogId, $userId, $clientId, $f['occurred_at'], $f['category'], $f['title'], $f['text'], ($f['highlight'] ?? false) ? 1 : 0, $now, $now],
         );
     }
 
@@ -47,8 +47,8 @@ final class DiaryRepository
     public function update(int $id, array $f): void
     {
         $this->db->run(
-            'UPDATE diary_entries SET occurred_at = ?, category = ?, title = ?, text = ?, updated_at = ? WHERE id = ?',
-            [$f['occurred_at'], $f['category'], $f['title'], $f['text'], Db::now(), $id],
+            'UPDATE diary_entries SET occurred_at = ?, category = ?, title = ?, text = ?, highlight = ?, updated_at = ? WHERE id = ?',
+            [$f['occurred_at'], $f['category'], $f['title'], $f['text'], ($f['highlight'] ?? false) ? 1 : 0, Db::now(), $id],
         );
     }
 
@@ -106,6 +106,7 @@ final class DiaryRepository
             'category' => $e['category'],
             'title' => $e['title'],
             'text' => $e['text'],
+            'highlight' => (bool) ($e['highlight'] ?? false),
             'photoIds' => array_map('strval', $e['photos'] ?? []),
         ];
     }

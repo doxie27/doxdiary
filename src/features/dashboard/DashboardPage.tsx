@@ -168,7 +168,7 @@ export function DashboardPage() {
           <Shortcut to="/diary?new=1" icon={NotebookPen} label="Neuer Eintrag" tint="bg-honey-100 text-honey-600" />
           <Shortcut to="/training/exercises" icon={Library} label="Übungen" tint="bg-sky-100 text-sky-600" />
           <Shortcut to="/training/history" icon={CalendarDays} label="Verlauf" tint="bg-sage-100 text-sage-700" />
-          <Shortcut to="/diary" icon={BookHeart} label="Tagebuch" tint="bg-clay-100 text-clay-600" />
+          <Shortcut to="/review" icon={BookHeart} label="Rückblick" tint="bg-clay-100 text-clay-600" />
         </div>
       </section>
     </div>

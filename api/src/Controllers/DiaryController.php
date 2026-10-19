@@ -103,6 +103,7 @@ final class DiaryController
             'category' => $v->enum('category', self::CATEGORIES),
             'title' => $v->string('title', 1, 80),
             'text' => $v->string('text', 0, 5000, multiline: true),
+            'highlight' => ($body['highlight'] ?? false) === true,
         ];
         $v->validate();
         return $f;

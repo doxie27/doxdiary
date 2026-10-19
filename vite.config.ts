@@ -8,6 +8,8 @@ import { serviceWorker } from './src/pwa/vite-plugin-sw.ts'
 export default defineConfig(({ mode }) => ({
   base: mode === 'showcase' ? './' : (process.env.VITE_BASE ?? '/'),
   plugins: [react(), tailwindcss(), serviceWorker()],
+  // PDF-Bibliothek wird erst bei Bedarf geladen – im Dev-Server vorab bündeln (sonst Neuladen beim ersten Klick)
+  optimizeDeps: { include: ['pdf-lib', '@pdf-lib/fontkit'] },
   server: {
     // Phase 2: lokale PHP-API (php -S localhost:8080 -t api/public)
     proxy: { '/api': 'http://localhost:8080' },

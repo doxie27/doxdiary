@@ -21,6 +21,7 @@ import { HistoryPage } from './features/physio/HistoryPage'
 import { PlanDetailPage } from './features/physio/PlanDetailPage'
 import { PlanEditorPage } from './features/physio/PlanEditorPage'
 import { PlansPage } from './features/physio/PlansPage'
+import { ReviewPage } from './features/review/ReviewPage'
 import { SessionPage } from './features/physio/SessionPage'
 import { AppStoreProvider, useStore } from './store/AppStore'
 import { LiveSync } from './store/LiveSync'
@@ -131,6 +132,7 @@ export default function App() {
               <Route path="training/exercises/:id/edit" element={<ExerciseEditorPage />} />
               <Route path="training/history" element={<HistoryPage />} />
               <Route path="diary" element={<DiaryPage />} />
+              <Route path="review" element={<ReviewPage />} />
               <Route path="dog" element={<DogProfilePage />} />
               <Route path="dogs/new" element={<NewDogPage />} />
               <Route path="account" element={<AccountPage />} />

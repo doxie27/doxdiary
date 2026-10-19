@@ -44,8 +44,9 @@ Doxie Diary
     │   └── Trainingsmodus (Vollbild): Intro → Übung → Pause → Rückmeldung → Zusammenfassung
     │
     ├── Tagebuch
-    │   ├── Chronologische Timeline mit Kategorien-Filter
-    │   └── Eintrag anlegen / bearbeiten (Bottom Sheet)
+    │   ├── Chronologische Timeline mit Kategorien-Filter, ★-Highlights
+    │   ├── Eintrag anlegen / bearbeiten (Bottom Sheet)
+    │   └── Rückblick (Woche/Monat/Jahr/frei) & Bericht für Tierarzt/Physio → PDF
     │
     ├── Profil (Hund)
     │   ├── Hero mit Porträt, Steckbrief, Beschreibung
@@ -73,7 +74,8 @@ Doxie Diary
 | `/training/exercises`, `/new`, `/:id`, `/:id/edit` | Übungsbibliothek | Suchen, filtern, verwalten |
 | `/training/history` | Verlauf | Kalender, Statistiken, vergangene Einheiten |
 | `/training/session/:planId` | Trainingsmodus | Vollbild, ohne Navigation – volle Konzentration |
-| `/diary` (`?new=1`) | Tagebuch | Timeline, Eintrag anlegen |
+| `/diary` (`?new=1`) | Tagebuch | Timeline, Eintrag anlegen, Highlights |
+| `/review` (`?mode=vet`) | Rückblick / Bericht | Zusammenfassung eines Zeitraums, PDF erstellen |
 | `/dog`, `/dogs/new` | Hundeprofil | Profil ansehen/bearbeiten, Hund anlegen |
 | `/account` | Konto | Einstellungen, Datenschutz |
 

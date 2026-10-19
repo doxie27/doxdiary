@@ -135,6 +135,23 @@ try {
   await shot('02-diary')
   step('Tagebucheintrag mit Foto auf dem Server')
 
+  // ── Highlight, Rückblick & Tierarzt-Bericht als PDF ──
+  await page.getByRole('button', { name: 'Als Highlight markieren' }).first().click()
+  await page.getByText('Als Highlight markiert').waitFor()
+  await page.reload()
+  await page.getByRole('button', { name: 'Highlight entfernen' }).first().waitFor()
+  await page.goto(`${BASE}/review`)
+  await page.getByText('Die schönsten Momente').count() // Vorschau zeigt Highlights
+  await page.getByRole('heading', { name: 'Highlights' }).or(page.getByText('HIGHLIGHTS')).first().waitFor()
+  for (const mode of ['review', 'vet']) {
+    if (mode === 'vet') await page.getByRole('tab', { name: 'Tierarzt/Physio' }).click()
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.getByRole('button', { name: 'PDF erstellen' }).click()])
+    const pdfPath = await dl.path()
+    const head = fs.readFileSync(pdfPath).subarray(0, 5).toString()
+    if (head !== '%PDF-' || fs.statSync(pdfPath).size < 5000) throw new Error(`PDF ungültig (${mode})`)
+    step(`${mode === 'review' ? 'Rückblick' : 'Tierarzt-Bericht'} als PDF (${Math.round(fs.statSync(pdfPath).size / 1024)} KB): ${dl.suggestedFilename()}`)
+  }
+
   // ── Datenschutz: nichts Sensibles im Browser-Speicher ──
   const leaked = await page.evaluate(() => Object.values(localStorage).some((v) => v.includes('E2E Ausflug') || v.includes('E2E Morgenrunde')))
   if (leaked) throw new Error('Inhalte im localStorage gefunden')
@@ -163,9 +180,9 @@ try {
   await page.getByRole('button', { name: 'Anmelden' }).click()
   await page.getByText('Deine bisherigen Daten wurden übernommen').waitFor()
   await page.goto(`${BASE}/diary`)
-  await page.getByText('Alter lokaler Eintrag').waitFor()
+  await page.locator('main').getByText('Alter lokaler Eintrag').first().waitFor()
   await page.goto(`${BASE}/training`)
-  await page.getByText('Alter lokaler Plan').waitFor()
+  await page.locator('main').getByText('Alter lokaler Plan').first().waitFor()
   const stillLocal = await page.evaluate((k) => localStorage.getItem(k), `doxie-diary.local.${userId}`)
   if (stillLocal) throw new Error('Lokale Altdaten nicht entfernt')
   step('Alte lokale Daten übernommen und aus dem Browser entfernt')

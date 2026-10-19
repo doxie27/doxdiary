@@ -144,4 +144,6 @@ export interface DiaryEntry {
   title: string
   text: string
   photos: string[]
+  /** Im Rückblick hervorgehoben */
+  highlight?: boolean
 }

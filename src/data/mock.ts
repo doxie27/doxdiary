@@ -377,6 +377,7 @@ export const demoDiary: DiaryEntry[] = [
     title: 'Erster Ausflug an den See',
     text: 'Mit Hundebuggy hingefahren, am Ufer 15 Minuten gelaufen. Sie war total entspannt und hat die Enten beobachtet.',
     photos: [],
+    highlight: true,
   },
   {
     id: 'j5',
@@ -386,6 +387,7 @@ export const demoDiary: DiaryEntry[] = [
     title: 'Cavaletti klappt besser',
     text: 'Heute alle sechs Durchgänge ohne Anstoßen an den Stangen. Kleine Party mit Käsewürfeln.',
     photos: [],
+    highlight: true,
   },
   {
     id: 'j6',

@@ -215,7 +215,7 @@ interface ApiDiaryEntry extends Omit<DiaryEntry, 'photos'> {
   photoIds: string[]
 }
 const toEntry = ({ photoIds, ...e }: ApiDiaryEntry): DiaryEntry => ({ ...e, photos: photoIds.map((id) => mediaUrl(id)!) })
-const entryInput = (e: DiaryEntry) => ({ at: e.at, category: e.category, title: e.title, text: e.text })
+const entryInput = (e: DiaryEntry) => ({ at: e.at, category: e.category, title: e.title, text: e.text, highlight: !!e.highlight })
 
 export const diaryApi = {
   list: async (dogId: string) => (await api<{ entries: ApiDiaryEntry[] }>('GET', `/dogs/${dogId}/diary`)).entries.map(toEntry),

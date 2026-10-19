@@ -35,7 +35,11 @@ final class DiaryTest extends TestCase
         self::assertCount(3, $updated['photoIds']);
         self::assertSame(404, $c->get("/media/{$photos[0]}")->status);
 
-        self::assertSame(200, $c->patch("/diary/{$entry['id']}", ['at' => $entry['at'], 'category' => 'alltag', 'title' => 'See (bearbeitet)', 'text' => ''])->status);
+        self::assertFalse($entry['highlight']);
+        $hl = $c->patch("/diary/{$entry['id']}", ['at' => $entry['at'], 'category' => 'alltag', 'title' => 'See (bearbeitet)', 'text' => '', 'highlight' => true]);
+        self::assertSame(200, $hl->status);
+        self::assertTrue($hl->json['entry']['highlight'], 'Highlight wird gespeichert');
+        self::assertSame(['highlight' => true], array_intersect_key($c->get("/dogs/{$dog['id']}/diary")->json['entries'][0], ['highlight' => 1]));
         self::assertSame(422, $c->patch("/diary/{$entry['id']}", ['at' => 'morgen', 'category' => 'x', 'title' => '', 'text' => ''])->status);
 
         $before = count(glob(doxie_config()->storagePath('uploads') . '/*.jpg'));
