@@ -220,8 +220,8 @@ function BackupSheet({ open, onClose, onDone, encrypted }: { open: boolean; onCl
   return (
     <Sheet open={open} onClose={onClose} title="Backup herunterladen">
       <p className="text-ink-2">Enthält die komplette Datenbank und alle Fotos als ZIP-Datei.</p>
-      <p className="mt-2 text-sm text-ink-3">{encrypted ? 'Die Datei ist mit deinem Backup-Passwort aus der config.php verschlüsselt (AES-256). Öffnen z. B. mit 7-Zip.' : 'Backup-Passwort fehlt in der config.php.'}</p>
-      <TextField className="mt-5" label="Dein Passwort zur Bestätigung" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <p className="mt-2 text-sm text-ink-3">{encrypted ? 'Die ZIP-Datei ist mit dem Backup-Passwort aus der config.php verschlüsselt (AES-256). Das brauchst du erst beim Öffnen mit 7-Zip.' : 'Backup-Passwort fehlt in der config.php.'}</p>
+      <TextField className="mt-5" label="Dein Login-Passwort zur Bestätigung" hint="nicht das Backup-Passwort" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       {error && <p role="alert" className="mt-4 rounded-2xl bg-clay-100 px-4 py-3 text-sm font-semibold text-alert">{error}</p>}
       <Button block icon={Download} className="mt-5" disabled={busy || !password} onClick={download}>{busy ? 'Wird erstellt …' : 'Herunterladen'}</Button>
     </Sheet>
@@ -274,7 +274,7 @@ function UserSheet({ user, self, onClose, onChanged }: { user: AdminUser; self: 
       ) : (
         <div className="mt-6 space-y-4">
           <p className="text-ink-2">Das Konto wird mit allen Hunden, Trainings, Tagebucheinträgen und Fotos dauerhaft gelöscht. Nur auf ausdrücklichen Wunsch der Person.</p>
-          <TextField label="Dein Admin-Passwort zur Bestätigung" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <TextField label="Dein Login-Passwort zur Bestätigung" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <Button variant="danger" block disabled={busy || !password} onClick={() => run(() => adminApi.remove(user.id, password), 'Konto gelöscht')}>Endgültig löschen</Button>
           <Button variant="ghost" block onClick={() => setConfirmDelete(false)}>Abbrechen</Button>
         </div>

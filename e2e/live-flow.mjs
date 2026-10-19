@@ -213,7 +213,7 @@ try {
   await shot('03-admin')
   step('Admin-Bereich: Status und Konten, keine Inhalte')
   await page.getByRole('button', { name: 'Backup herunterladen' }).click()
-  await page.getByLabel('Dein Passwort zur Bestätigung').fill(password)
+  await page.getByLabel('Dein Login-Passwort zur Bestätigung').fill(password)
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Herunterladen', exact: true }).click()])
   const file = await download.path()
   if (!file || fs.statSync(file).size < 500) throw new Error('Backup leer')
