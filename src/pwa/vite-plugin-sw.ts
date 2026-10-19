@@ -13,7 +13,9 @@ export function serviceWorker(): Plugin {
     generateBundle(_options, bundle) {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map'))
       const statics = ['index.html', 'favicon.svg', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png']
-      const precache = [...new Set([...statics, ...files.filter((f) => !f.endsWith('.html'))])]
+      // PDF-Baustein (Bibliothek + Schriften) nicht vorab laden – erst bei Gebrauch (Datenvolumen)
+      const lazy = (f: string) => /^assets\/pdf-/.test(f) || f.endsWith('.ttf')
+      const precache = [...new Set([...statics, ...files.filter((f) => !f.endsWith('.html') && !lazy(f))])]
       const version = createHash('sha256').update(files.sort().join('|')).digest('hex').slice(0, 12)
       const template = readFileSync(new URL('./sw-template.js', import.meta.url), 'utf8')
       this.emitFile({

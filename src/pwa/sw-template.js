@@ -33,6 +33,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(req).catch(() => caches.match(INDEX)))
     return
   }
-  // Gehashte Build-Dateien, Schriften, Icons: aus dem Cache, sonst Netz
-  event.respondWith(caches.match(req).then((hit) => hit || fetch(req)))
+  // Gehashte Build-Dateien, Schriften, Icons: aus dem Cache, sonst Netz.
+  // Nachgeladene Build-Dateien (z. B. PDF-Baustein) beim ersten Gebrauch für offline merken.
+  event.respondWith(
+    caches.match(req).then(
+      (hit) =>
+        hit ||
+        fetch(req).then((res) => {
+          if (res.ok && url.pathname.includes('/assets/')) {
+            const copy = res.clone()
+            caches.open(CACHE).then((c) => c.put(req, copy))
+          }
+          return res
+        }),
+    ),
+  )
 })
