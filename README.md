@@ -3,7 +3,7 @@
 **Dein Hund. Dein Alltag. Ein Ort für alles.**
 Modernes digitales Hundetagebuch mit Schwerpunkt Physiotherapie – als PWA, später auch nativ über Capacitor.
 
-> Status: **Version 0.4** für https://www.doxiewerk.de/doxiediary/. Konten mit E-Mail-Bestätigung, Hundeprofile, Physiotherapie und Tagebuch auf dem Server, Rückblick und Tierarzt-Bericht als PDF, Admin-Bereich mit verschlüsseltem Backup, installierbare PWA. Der Demo-Modus mit Beispieldaten funktioniert weiterhin ohne Server.
+> Status: **Version 0.4** für https://www.doxiediary.de/doxiediary/. Konten mit E-Mail-Bestätigung, Hundeprofile, Physiotherapie und Tagebuch auf dem Server, Rückblick und Tierarzt-Bericht als PDF, Admin-Bereich mit verschlüsseltem Backup, installierbare PWA. Der Demo-Modus mit Beispieldaten funktioniert weiterhin ohne Server.
 
 ## Schnellstart (Windows, macOS, Linux)
 

@@ -48,7 +48,7 @@ Ermittelt am 2026-10-18 mit `deploy/strato-check.php`. Das Skript wurde danach w
 |---|---|---|
 | Datenbanken | bis zu 25, MySQL 8 oder MariaDB wählbar; angelegt: **MariaDB 11.8** | Schema und Abfragen nutzen nur Standard-SQL und laufen auf MariaDB und MySQL 8. Lokal wird gegen MariaDB getestet. Eine Datenbank für Produktion, eine zweite später für Restore-Tests. Host/Benutzer stehen nur in `config.php` auf dem Server. |
 | SSH & SFTP | **nur SFTP** (Benutzer ohne Shell) | Deployment per SFTP; Migrationen laufen automatisch beim ersten Aufruf (`Support\Migrator`); Backups über STRATO-Sicherung, ab Phase 4 zusätzlich geschützter Backup-Download |
-| Ziel-URL | **https://www.doxiewerk.de/doxiediary/** (Unterordner der bestehenden Website) | Build mit `--base=/doxiediary/`, Session-Cookie-Pfad `/doxiediary/`, `doxie-private/` außerhalb des Webroots |
+| Ziel-URL | **https://www.doxiediary.de/doxiediary/** (Unterordner der bestehenden Website) | Build mit `--base=/doxiediary/`, Session-Cookie-Pfad `/doxiediary/`, `doxie-private/` außerhalb des Webroots |
 
 **Noch offen:**
 

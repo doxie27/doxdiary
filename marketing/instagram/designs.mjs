@@ -20,7 +20,7 @@ const brand = (x = 80, y = 80, light = false) =>
   `<div class="brand" style="left:${x}px;top:${y}px;${light ? 'color:#fbf8ef' : ''}"><img src="${logo}">Doxie Diary</div>`
 
 const footer = (light = false, y = null) =>
-  `<div class="abs url" style="left:80px;${y ? `top:${y}px` : 'bottom:72px'};font-size:28px;${light ? 'color:#fbf8ef' : ''}">doxiewerk.de/doxiediary</div>`
+  `<div class="abs url" style="left:80px;${y ? `top:${y}px` : 'bottom:72px'};font-size:28px;${light ? 'color:#fbf8ef' : ''}">doxiediary.de/doxiediary</div>`
 
 export const designs = [
   // ───────────── Feed-Posts 4:5 ─────────────
@@ -141,7 +141,7 @@ export const designs = [
       <div class="abs eyebrow" style="left:80px;top:300px">iPhone</div>
       <h1 class="abs display" style="left:80px;top:350px;font-size:100px">Doxie Diary<br><span class="it">auf den Homescreen.</span></h1>
       ${[
-        ['1', 'In Safari öffnen', 'doxiewerk.de/doxiediary'],
+        ['1', 'In Safari öffnen', 'doxiediary.de/doxiediary'],
         ['2', 'Auf „Teilen“ tippen', 'das Quadrat mit dem Pfeil nach oben'],
         ['3', '„Zum Home-Bildschirm“', 'und „Hinzufügen“ bestätigen'],
       ].map(([n, t, s], i) => `
@@ -161,7 +161,7 @@ export const designs = [
       <h1 class="abs display" style="left:80px;top:580px;font-size:118px">Macht ihr<br>Physio-Übungen<br><span class="it">zuhause?</span></h1>
       <div class="abs" style="left:80px;right:80px;top:1060px;height:300px;border:4px dashed rgb(78 107 87 / .35);border-radius:40px;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--ink-3)">Umfrage-Sticker hier platzieren</div>
       <div class="abs" style="right:-260px;bottom:-260px;width:820px;height:820px;border-radius:50%;border:3px solid rgb(78 107 87 / .16);box-shadow:0 0 0 90px rgb(78 107 87 / .05), 0 0 0 180px rgb(78 107 87 / .03)"></div>
-      <div class="abs url" style="left:80px;bottom:150px;font-size:30px">doxiewerk.de/doxiediary</div>
+      <div class="abs url" style="left:80px;bottom:150px;font-size:30px">doxiediary.de/doxiediary</div>
     </div>`,
   },
   {
@@ -183,7 +183,7 @@ export const designs = [
       <h1 class="abs display" style="left:80px;top:580px;font-size:110px">Was soll<br>Doxie Diary als<br><span class="it">Nächstes können?</span></h1>
       <div class="abs" style="left:80px;right:80px;top:1060px;height:340px;border:4px dashed rgb(78 107 87 / .35);border-radius:40px;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--ink-3)">Fragen-Sticker hier platzieren</div>
       <div class="abs" style="right:-260px;bottom:-260px;width:820px;height:820px;border-radius:50%;border:3px solid rgb(78 107 87 / .16);box-shadow:0 0 0 90px rgb(78 107 87 / .05), 0 0 0 180px rgb(78 107 87 / .03)"></div>
-      <div class="abs url" style="left:80px;bottom:150px;font-size:30px">doxiewerk.de/doxiediary</div>
+      <div class="abs url" style="left:80px;bottom:150px;font-size:30px">doxiediary.de/doxiediary</div>
     </div>`,
   },
 

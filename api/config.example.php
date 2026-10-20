@@ -8,11 +8,11 @@
 return [
     'app' => [
         'env' => 'production',                 // 'development' zeigt Fehlermeldungen (ohne personenbezogene Daten)
-        'url' => 'https://www.doxiewerk.de/doxiediary', // Basis-URL der App (Links in E-Mails, Origin-Prüfung)
+        'url' => 'https://www.doxiediary.de/doxiediary', // Basis-URL der App (Links in E-Mails, Origin-Prüfung)
         'secret' => '',                        // leer lassen: wird automatisch in storage/secret.key erzeugt
         'secure_cookies' => true,              // lokal ohne HTTPS: false
         'cookie_path' => '/doxiediary/',       // Session-Cookie nur für die App, nicht für die ganze Domain
-        'allowed_origins' => ['https://doxiewerk.de'], // Aufruf ohne www; später z. B. 'capacitor://localhost'
+        'allowed_origins' => ['https://doxiediary.de'], // Aufruf ohne www; später z. B. 'capacitor://localhost'
     ],
     'admin' => [
         // Admin-Zugang nur für diese (bestätigten) E-Mail-Adressen
@@ -42,9 +42,9 @@ return [
         'host' => 'smtp.strato.de',
         'port' => 465,
         'encryption' => 'ssl',                 // ssl (465) oder tls (587, STARTTLS)
-        'user' => 'noreply@doxiewerk.de',
+        'user' => 'noreply@doxiediary.de',
         'pass' => 'POSTFACH-PASSWORT',
-        'from' => 'noreply@doxiewerk.de',
+        'from' => 'noreply@doxiediary.de',
         'from_name' => 'Doxie Diary',
     ],
 ];

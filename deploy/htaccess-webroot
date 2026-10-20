@@ -4,6 +4,11 @@ Options -Indexes -MultiViews
 RewriteEngine On
 RewriteBase /
 
+# Feste Domain: andere Hostnamen (alte Domain, ohne www) dauerhaft umleiten.
+# Wird von scripts/build-release.mjs mit --host=… gesetzt, sonst entfernt.
+#HOST RewriteCond %{HTTP_HOST} !=__HOST__ [NC]
+#HOST RewriteRule ^ https://__HOST__%{REQUEST_URI} [R=301,L]
+
 # Immer HTTPS
 RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
