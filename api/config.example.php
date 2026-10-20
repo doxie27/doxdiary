@@ -8,10 +8,10 @@
 return [
     'app' => [
         'env' => 'production',                 // 'development' zeigt Fehlermeldungen (ohne personenbezogene Daten)
-        'url' => 'https://www.doxiediary.de/doxiediary', // Basis-URL der App (Links in E-Mails, Origin-Prüfung)
+        'url' => 'https://www.doxiediary.de', // Basis-URL der App (Links in E-Mails, Origin-Prüfung)
         'secret' => '',                        // leer lassen: wird automatisch in storage/secret.key erzeugt
         'secure_cookies' => true,              // lokal ohne HTTPS: false
-        'cookie_path' => '/doxiediary/',       // Session-Cookie nur für die App, nicht für die ganze Domain
+        'cookie_path' => '/',                  // App liegt direkt auf der Domain (bei Unterordner z. B. '/app/')
         'allowed_origins' => ['https://doxiediary.de'], // Aufruf ohne www; später z. B. 'capacitor://localhost'
     ],
     'admin' => [

@@ -14,7 +14,7 @@
   (der Windows-Explorer kann AES-verschlüsselte ZIPs nicht entpacken).
 #>
 param(
-  [string]$Url = 'https://www.doxiediary.de/doxiediary/api/v1/admin/backup',
+  [string]$Url = 'https://www.doxiediary.de/api/v1/admin/backup',
   [string]$TokenFile = "$env:USERPROFILE\.doxie-backup-token",
   [string]$Target = "$env:USERPROFILE\Documents\Doxie-Backups",
   [int]$Keep = 30

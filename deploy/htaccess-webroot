@@ -1,13 +1,14 @@
-# Doxie Diary – .htaccess für den öffentlichen App-Ordner (z. B. /doxiediary/)
+# Doxie Diary – .htaccess für den öffentlichen App-Ordner
 # RewriteBase wird von scripts/build-release.mjs gesetzt.
 Options -Indexes -MultiViews
 RewriteEngine On
 RewriteBase /
 
 # Feste Domain: andere Hostnamen (alte Domain, ohne www) dauerhaft umleiten.
-# Wird von scripts/build-release.mjs mit --host=… gesetzt, sonst entfernt.
+# $1 ist der Pfad relativ zu diesem Ordner – so wird z. B. alte-domain.de/doxiediary/training
+# zur neuen Domain + /training. Wird von scripts/build-release.mjs mit --host=… gesetzt, sonst entfernt.
 #HOST RewriteCond %{HTTP_HOST} !=__HOST__ [NC]
-#HOST RewriteRule ^ https://__HOST__%{REQUEST_URI} [R=301,L]
+#HOST RewriteRule ^(.*)$ https://__HOST__/$1 [R=301,L]
 
 # Immer HTTPS
 RewriteCond %{HTTPS} !=on

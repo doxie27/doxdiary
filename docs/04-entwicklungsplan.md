@@ -39,7 +39,7 @@ Willkommen & Auth-Oberflächen (ohne echte Anmeldung) · Dashboard · Hund wechs
 
 ## Live-Stand (2026-10-18)
 
-Läuft unter https://www.doxiediary.de/doxiediary/: Health-Check grün (App + Datenbank), Passwort-Reset-Mail kommt an, neues Logo eingespielt.
+Läuft unter https://www.doxiediary.de/: Health-Check grün (App + Datenbank), Passwort-Reset-Mail kommt an, neues Logo eingespielt.
 
 ## Phase 3 – Betrieb & Physiotherapie ✅
 
@@ -102,4 +102,4 @@ Familienkonten · Therapeut:innen-Accounts & Praxen · Planzuweisung · Freigabe
 | 2026-10-18 | Live auf www.doxiewerk.de/doxiediary/, Logo aktualisiert, Phase-3-Plan priorisiert (Betrieb vor Physio-Server) |
 | 2026-10-18 | Phase 3 & 4 umgesetzt: Bestätigung, Admin, Backup, Physio & Tagebuch auf dem Server, Import, PWA, Offline |
 | 2026-10-19 | Version 0.4: Rückblick, Erinnerungsbuch, Tierarzt-/Physio-Bericht als PDF, Highlights |
-| 2026-10-20 | Impressum & Datenschutzerklärung in der App, Demo-Link nur noch in der Vorschau, Umzug auf www.doxiediary.de (301 von allen anderen Hostnamen), Instagram-Startpaket & Logo-Dateien |
+| 2026-10-20 | Impressum & Datenschutzerklärung in der App, Demo-Link nur noch in der Vorschau, Umzug auf https://www.doxiediary.de/ (App direkt auf der Domain, 301 von allen anderen Hostnamen inkl. www.doxiewerk.de/doxiediary/), Instagram-Startpaket & Logo-Dateien |

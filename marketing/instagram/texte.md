@@ -20,8 +20,8 @@ Kostenlos · ohne Werbung · ohne Tracking
 ```
 
 **Links in der Bio** (Instagram erlaubt mehrere):
-1. `https://www.doxiediary.de/doxiediary/` – Titel „App öffnen“
-2. `https://www.doxiediary.de/doxiediary/impressum.html` – Titel „Impressum“ (Pflicht für geschäftsmäßige Accounts)
+1. `https://www.doxiediary.de/` – Titel „App öffnen“
+2. `https://www.doxiediary.de/impressum.html` – Titel „Impressum“ (Pflicht für geschäftsmäßige Accounts)
 
 **Profilbild:** `out/profilbild.png` (Instagram schneidet es rund zu).
 
@@ -160,7 +160,7 @@ Speicher dir den Post für später 🔖
 
 | Datei | Was du in Instagram ergänzt |
 |---|---|
-| `story-01-launch.png` | **Link-Sticker** auf die gestrichelte Fläche: `https://www.doxiediary.de/doxiediary/`, Text „Jetzt ausprobieren“. Gestrichelte Fläche vorher mit dem Sticker abdecken. |
+| `story-01-launch.png` | **Link-Sticker** auf die gestrichelte Fläche: `https://www.doxiediary.de/`, Text „Jetzt ausprobieren“. Gestrichelte Fläche vorher mit dem Sticker abdecken. |
 | `story-02-installieren.png` | Nichts – als Highlight „So geht's“ speichern. |
 | `story-03-umfrage.png` | **Umfrage-Sticker:** „Ja, regelmäßig 💪“ / „Noch nicht 🙈“ |
 | `story-04-zaehlen.png` | Optional Link-Sticker; als Highlight „So geht's“ speichern. |

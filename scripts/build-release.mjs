@@ -1,8 +1,8 @@
 /**
  * Baut ein Release-Paket für STRATO unter release/:
- *   release/<ordner>/       → öffentlich, z. B. Webroot/doxiediary/
+ *   release/<ordner>/       → öffentlich, Zielordner der Domain (z. B. doxiediary/)
  *   release/doxie-private/  → außerhalb des Webroots (App-Code, Migrationen)
- * Aufruf: npm run release  (Pfad über --base=/doxiediary/, Domain über --host=www.doxiediary.de, siehe package.json)
+ * Aufruf: npm run release  (URL-Pfad --base=/, Domain --host=www.doxiediary.de, Ordnername --folder=doxiediary; siehe package.json)
  * config.php und storage/ werden bewusst NICHT mitgeliefert.
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -14,7 +14,8 @@ const arg = process.argv.find((a) => a.startsWith('--base='))
 const base = ('/' + (arg ? arg.slice(7) : '/').replace(/^\/+|\/+$/g, '') + '/').replace('//', '/')
 const hostArg = process.argv.find((a) => a.startsWith('--host='))?.slice(7) ?? ''
 if (hostArg && !/^[a-z0-9.-]+$/i.test(hostArg)) throw new Error(`Ungültige Domain: ${hostArg}`)
-const folder = base === '/' ? 'doxie-public' : base.split('/').filter(Boolean).at(-1)
+const folderArg = process.argv.find((a) => a.startsWith('--folder='))?.slice(9)
+const folder = folderArg || (base === '/' ? 'doxie-public' : base.split('/').filter(Boolean).at(-1))
 const out = join(root, 'release')
 const pub = join(out, folder)
 const priv = join(out, 'doxie-private', 'app')
